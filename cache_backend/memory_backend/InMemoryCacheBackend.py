@@ -8,7 +8,7 @@ from cache_backend.CacheBackendBase import CacheBackendBase
 from cache_backend.QueryInfo import QueryInfo
 
 
-class MemoryCacheBackend(CacheBackendBase):
+class InMemoryCacheBackend(CacheBackendBase):
     """Implementation of the MemoryCacheBackend class, which implements the CacheBackend interface."""
     _cache: Dict[QueryInfo, Any] = {}
 

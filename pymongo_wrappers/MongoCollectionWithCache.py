@@ -16,7 +16,7 @@ from cache_backend.QueryInfo import QueryInfo
 class MongoCollectionWithCache(Collection):
     _cache_backend: CacheBackendBase = None
 
-    def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.MEMORY, **kwargs):
+    def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY, **kwargs):
         super().__init__(*args, **kwargs)
         self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(self)
 
