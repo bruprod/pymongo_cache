@@ -3,6 +3,9 @@ A library containing as wrapper for collection, database and mongoclient impleme
 The basic implementation stores the data for each MongoCollectionWithCache in an in-memory cache, which 
 is a member of the class.
 
+## Supported cache backends
+- InMemoryCacheBackend: Stores the data in an in-memory cache
+
 ## Requirements
 - pymongo must be installed
 
@@ -47,4 +50,4 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 - TTL to the cache
 - LRU cache
 - Handler for change streams of the collections, which invalidates the cache
-- Using the MongoDB database as cache for the mongodb queries
+- Adding additional cache backends for mongodb and sqlite

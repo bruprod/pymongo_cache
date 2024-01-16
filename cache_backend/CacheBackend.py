@@ -19,7 +19,7 @@ class CacheBackendFactory:
     def get_cache_backend(cache_backend: CacheBackend) -> Type[CacheBackendBase]:
         """ Get the cache backend """
         if cache_backend == CacheBackend.IN_MEMORY:
-            from cache_backend.memory_backend.InMemoryCacheBackend import InMemoryCacheBackend
+            from cache_backend.in_memory_backend.InMemoryCacheBackend import InMemoryCacheBackend
             return InMemoryCacheBackend
         elif cache_backend == CacheBackend.MONGODB:
             raise NotImplementedError("MongoDB cache backend not implemented yet")
