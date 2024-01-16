@@ -1,4 +1,5 @@
 """ Class for caching MongoDB queries in a SQLite database. """
+import json
 from dataclasses import dataclass
 from typing import Any, Dict
 
@@ -74,7 +75,7 @@ class MongoDBCacheBackend(CacheBackendBase):
 
     def clear(self) -> None:
         """ Clear the cache. """
-        self._get_cache_collection().delete_many({})
+        self._get_cache_collection().delete_many({COLLECTION_NAME: self.collection.name})
 
     def get_ttl(self, key: QueryInfo) -> int:
         """ Get the TTL for the key. """
