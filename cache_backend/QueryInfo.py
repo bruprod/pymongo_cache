@@ -4,7 +4,7 @@ from hashlib import md5
 from typing import Dict, Any, Optional, Mapping, List, Sequence
 
 
-@dataclass()
+@dataclass
 class QueryInfo:
     """Class representing a pymongo query and its information."""
     query: Optional[Dict[str, Any]] = None
@@ -16,5 +16,5 @@ class QueryInfo:
 
     def __hash__(self):
         """Return the hash of the query."""
-        hash_val = int(md5(str(self).encode()).hexdigest(), 16)
+        hash_val = int(md5(str(self).encode()).hexdigest(), 16) % (10 ** 8)
         return hash_val

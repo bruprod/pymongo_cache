@@ -22,7 +22,8 @@ class CacheBackendFactory:
             from cache_backend.in_memory_backend.InMemoryCacheBackend import InMemoryCacheBackend
             return InMemoryCacheBackend
         elif cache_backend == CacheBackend.MONGODB:
-            raise NotImplementedError("MongoDB cache backend not implemented yet")
+            from cache_backend.mongodb_backend.MongoDBCacheBackend import MongoDBCacheBackend
+            return MongoDBCacheBackend
         elif cache_backend == CacheBackend.SQLITE:
             raise NotImplementedError("SQLite cache backend not implemented yet")
         else:
