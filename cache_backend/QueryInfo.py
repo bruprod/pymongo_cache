@@ -1,7 +1,7 @@
 """Class representing a pymongo query and its information."""
 from dataclasses import dataclass
 from hashlib import md5
-from typing import Dict, Any, Optional, Mapping, List, Sequence
+from typing import Dict, Any, Optional, Mapping, Sequence
 
 
 @dataclass

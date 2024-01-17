@@ -1,0 +1,6 @@
+VALUE = "value"
+QUERY_INFO = "query_info"
+CACHE_DATABASE = "CacheDatabase"
+CACHE_ENTRIES = "CacheEntries"
+COLLECTION_NAME = "collection_name"
+HASH_VAL = "hash_val"

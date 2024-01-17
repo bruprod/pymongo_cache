@@ -11,9 +11,13 @@ from cache_backend.QueryInfo import QueryInfo
 class CacheBackendBase:
     """Base class for cache backends."""
     collection: Collection = None
+    max_item_size: int = 0
+    ttl: int = 0
 
-    def __init__(self, collection: Collection):
+    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 0):
         self.collection = collection
+        self.max_item_size = max_item_size
+        self.ttl = ttl
 
     @abstractmethod
     def has_item(self, key: QueryInfo) -> bool:
@@ -41,16 +45,14 @@ class CacheBackendBase:
         pass
 
     @abstractmethod
-    def get_ttl(self, key: QueryInfo) -> Optional[int]:
-        """Get the TTL for the key."""
-        pass
-
-    @abstractmethod
-    def set_ttl(self, key: QueryInfo, ttl: int) -> None:
-        """Set the TTL for the key."""
-        pass
-
-    @abstractmethod
     def get_all(self) -> Dict[QueryInfo, Any]:
         """Get all the values from the cache."""
         pass
+
+    def get_ttl(self) -> Optional[int]:
+        """Get the TTL for the key."""
+        return self.ttl
+
+    def set_ttl(self, ttl: int) -> None:
+        """Set the TTL for the key."""
+        self.ttl = ttl
