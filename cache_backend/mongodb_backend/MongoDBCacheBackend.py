@@ -14,8 +14,8 @@ from cache_backend.QueryInfo import QueryInfo
 class MongoDBCacheBackend(CacheBackendBase):
     """ Class for caching MongoDB queries in a Mongodb database. """
 
-    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 0):
-        super().__init__(collection, ttl, max_item_size)
+    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6, max_num_items: int = 1000):
+        super().__init__(collection, ttl, max_item_size, max_num_items)
 
     def _get_cache_collection(self) -> Collection:
         """ Create the table if it doesn't exist. """
