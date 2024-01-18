@@ -12,6 +12,7 @@ class MongoDatabaseWithCache(Database):
     """
     _cache_backend: CacheBackend = CacheBackend.IN_MEMORY
     _functions_to_cache = None
+    _collections_created = None
 
     def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY, functions_to_cache=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,7 +21,15 @@ class MongoDatabaseWithCache(Database):
             self._functions_to_cache = DEFAULT_CACHE_FUNCTIONS
         else:
             self._functions_to_cache = functions_to_cache
+        self._collections_created = {}
 
     def __getitem__(self, item):
-        return MongoCollectionWithCache(self, item, cache_backend=self._cache_backend,
+
+        if item in self._collections_created:
+            return self._collections_created[item]
+
+        coll = MongoCollectionWithCache(self, item, cache_backend=self._cache_backend,
                                         functions_to_cache=self._functions_to_cache)
+        self._collections_created[item] = coll
+
+        return coll
