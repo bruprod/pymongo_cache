@@ -1,8 +1,10 @@
 """ Class for caching MongoDB queries in a SQLite database. """
+import atexit
 from typing import Any, Dict
 
 from pymongo import IndexModel, ASCENDING
 from pymongo.collection import Collection
+from pymongo.database import Database
 
 from cache_backend.CacheBackendBase import CacheBackendBase
 from cache_backend.CacheEntry import CacheEntry
@@ -20,10 +22,13 @@ class MongoDBCacheBackend(CacheBackendBase):
         super().__init__(collection, ttl, max_item_size, max_num_items)
         self._cache_collection = self._get_cache_collection()
 
+        # Register the clear function to be called when the program exits
+        atexit.register(self.clear)
+
     def _get_cache_collection(self) -> Collection:
         """ Create the table if it doesn't exist. """
         client = self.collection.database.client
-        db = client[CACHE_DATABASE]
+        db = Database(client, CACHE_DATABASE)
         coll = Collection(db, CACHE_ENTRIES)
         coll.create_indexes([IndexModel([(COLLECTION_NAME, ASCENDING), (HASH_VAL, ASCENDING)], name="CacheIndex")])
         return coll
@@ -59,3 +64,6 @@ class MongoDBCacheBackend(CacheBackendBase):
     def get_all(self) -> Dict[QueryInfo, Any]:
         """ Get all the values from the cache. """
         return {item[QUERY_INFO]: item[VALUE] for item in self.collection.find({})}
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.clear()

@@ -59,8 +59,3 @@ class CacheBackendBase:
     def set_ttl(self, ttl: int) -> None:
         """Set the TTL for the key."""
         self.ttl = ttl
-
-    def __del__(self):
-        """Delete the cache."""
-        # TODO: Implement this
-        pass

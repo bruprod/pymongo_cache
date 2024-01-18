@@ -56,4 +56,4 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 - TTL to the cache
 - LRU cache
 - Handler for change streams of the collections, which invalidates the cache
-- Adding additional cache backends for mongodb and sqlite
+- Adding a cache-backend for sqlite

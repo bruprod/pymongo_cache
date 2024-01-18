@@ -35,7 +35,3 @@ class MongoClientWithCache(MongoClient):
         self._database_created[name] = db
 
         return db
-
-    def __del__(self):
-        # Cleanup the cache backend
-        pass
