@@ -12,6 +12,7 @@ class CacheEntry:
     value: Any
     collection_name: str
     hash_val: int
+    execution_time: int # in milliseconds
     timestamp: datetime = None
 
     def __post_init__(self):

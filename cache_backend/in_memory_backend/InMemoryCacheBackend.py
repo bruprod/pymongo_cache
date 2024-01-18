@@ -25,9 +25,14 @@ class InMemoryCacheBackend(CacheBackendBase):
             return entry.value
         return None
 
-    def set(self, key: QueryInfo, value: Any, ttl: int = None) -> None:
-        """Set the value in the cache."""
-        self._cache[key] = CacheEntry(key, value, self.collection.name, key.__hash__())
+    def set(self, key: QueryInfo, value: Any, execution_time_millis, ttl: int = None) -> None:
+        """Set the value in the cache.
+        :param ttl: The time to live for the key.
+        :param value: The value to set.
+        :param key: The key to set.
+        :param execution_time_millis: The execution time of the query in milliseconds.
+        """
+        self._cache[key] = CacheEntry(key, value, self.collection.name, key.__hash__(), execution_time_millis)
 
     def delete(self, key: QueryInfo) -> None:
         """Delete the value from the cache."""

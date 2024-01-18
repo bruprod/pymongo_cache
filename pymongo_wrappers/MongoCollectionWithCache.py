@@ -1,6 +1,7 @@
 """Collection class, which derives from the pymongo Collection class, and
    adds a cache to speed up queries, which are requested multiple times.
 """
+import time
 from typing import Any, Optional, Mapping
 
 from pymongo.client_session import ClientSession
@@ -37,15 +38,19 @@ class MongoCollectionWithCache(Collection):
         if function_enum not in self._functions_to_cache:
             return self.__regular_collection.find_one(filter, *args, **kwargs)
 
-        query_info = QueryInfo(function_enum.name, query=filter, sort=kwargs.get("sort", None), skip=kwargs.get("skip", None),
+        query_info = QueryInfo(function_enum.name, query=filter, sort=kwargs.get("sort", None),
+                               skip=kwargs.get("skip", None),
                                limit=kwargs.get("limit", None), pipeline=kwargs.get("pipeline", None))
 
         item = self._cache_backend.get(query_info)
         if item is not None:
             return item
         else:
+            start = time.time_ns()
             result = self.__regular_collection.find_one(filter, *args, **kwargs)
-            self._cache_backend.set(query_info, result)
+            end = time.time_ns()
+            exec_in_ms = (end - start) / 1e6
+            self._cache_backend.set(query_info, result, exec_in_ms)
             return result
 
     def find(self, filter: dict, *args: Any, **kwargs: Any):
@@ -63,8 +68,11 @@ class MongoCollectionWithCache(Collection):
         if item is not None:
             return iter(item)
         else:
+            start = time.time_ns()
             result = self.__regular_collection.find(filter, *args, **kwargs)
-            self._cache_backend.set(query_info, list(result))
+            end = time.time_ns()
+            exec_in_ms = (end - start) / 1e6
+            self._cache_backend.set(query_info, list(result), exec_in_ms)
             return iter(self._cache_backend.get(query_info))
 
     def aggregate(
@@ -91,8 +99,11 @@ class MongoCollectionWithCache(Collection):
         if item is not None:
             return iter(self._cache_backend.get(item))
         else:
+            start = time.time_ns()
             result = self.__regular_collection.aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
-            self._cache_backend.set(pipeline_query_info, list(result))
+            end = time.time_ns()
+            exec_in_ms = (end - start) / 1e6
+            self._cache_backend.set(pipeline_query_info, list(result), exec_in_ms)
             return iter(self._cache_backend.get(pipeline_query_info))

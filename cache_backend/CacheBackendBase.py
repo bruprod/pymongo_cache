@@ -28,8 +28,13 @@ class CacheBackendBase:
         pass
 
     @abstractmethod
-    def set(self, key: QueryInfo, value: Any, ttl: Optional[int] = None) -> None:
-        """Set the value in the cache."""
+    def set(self, key: QueryInfo, value: Any, execution_time_millis, ttl: Optional[int] = None) -> None:
+        """Set the value in the cache.
+        :param ttl: The time to live for the key.
+        :param value: The value to set.
+        :param key: The key to set.
+        :param execution_time_millis: The execution time of the query in milliseconds.
+        """
         pass
 
     @abstractmethod

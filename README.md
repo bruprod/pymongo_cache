@@ -5,6 +5,7 @@ is a member of the class.
 
 ## Supported cache backends
 - InMemoryCacheBackend: Stores the data in an in-memory cache
+- MongoDbCacheBackend: Stores the data in an own database for caching inside the MongoDB instance
 
 ## Requirements
 - pymongo must be installed
