@@ -15,10 +15,12 @@ from cache_backend.QueryInfo import QueryInfo
 
 class MongoCollectionWithCache(Collection):
     _cache_backend: CacheBackendBase = None
+    __regular_collection = None
 
     def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY, **kwargs):
         super().__init__(*args, **kwargs)
         self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(self)
+        self.__regular_collection = Collection(self.database, self.name)
 
     def find_one(self, filter: Optional[Any] = None, *args: Any, **kwargs: Any):
         """Find a single document in the collection."""
@@ -28,7 +30,7 @@ class MongoCollectionWithCache(Collection):
         if self._cache_backend.has_item(query_info):
             return self._cache_backend.get(query_info)
         else:
-            result = super().find_one(filter, *args, **kwargs)
+            result = self.__regular_collection.find_one(filter, *args, **kwargs)
             self._cache_backend.set(query_info, result)
             return result
 
@@ -41,7 +43,7 @@ class MongoCollectionWithCache(Collection):
         if self._cache_backend.has_item(query_info):
             return iter(self._cache_backend.get(query_info))
         else:
-            result = super().find(filter, *args, **kwargs)
+            result = self.__regular_collection.find(filter, *args, **kwargs)
             self._cache_backend.set(query_info, list(result))
             return iter(self._cache_backend.get(query_info))
 
@@ -60,7 +62,7 @@ class MongoCollectionWithCache(Collection):
         if self._cache_backend.has_item(pipeline_query_info):
             return iter(self._cache_backend.get(pipeline_query_info))
         else:
-            result = super().aggregate(
+            result = self.__regular_collection.aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
             self._cache_backend.set(pipeline_query_info, list(result))
