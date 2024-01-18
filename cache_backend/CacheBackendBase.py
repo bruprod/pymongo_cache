@@ -15,7 +15,8 @@ class CacheBackendBase:
     ttl: int = 0
     max_num_items: int = 0
 
-    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1*10**6, max_num_items: int = 1000):
+    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
+                 max_num_items: int = 1000):
         self.collection = collection
         self.max_item_size = max_item_size
         self.max_num_items = max_num_items

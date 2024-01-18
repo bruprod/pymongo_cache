@@ -11,19 +11,31 @@ from pymongo.typings import _Pipeline
 from cache_backend.CacheBackend import CacheBackend, CacheBackendFactory
 from cache_backend.CacheBackendBase import CacheBackendBase
 from cache_backend.QueryInfo import QueryInfo
+from pymongo_wrappers.CacheFunctions import DEFAULT_CACHE_FUNCTIONS, CacheFunctions
 
 
 class MongoCollectionWithCache(Collection):
     _cache_backend: CacheBackendBase = None
+    _functions_to_cache = None
     __regular_collection = None
 
-    def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY, **kwargs):
+    def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
+                 functions_to_cache=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(self)
         self.__regular_collection = Collection(self.database, self.name)
 
+        if functions_to_cache is None:
+            self._functions_to_cache = DEFAULT_CACHE_FUNCTIONS
+        else:
+            self._functions_to_cache = functions_to_cache
+
     def find_one(self, filter: Optional[Any] = None, *args: Any, **kwargs: Any):
         """Find a single document in the collection."""
+        # If the find_one function is not in the functions to cache, then just return the result of the regular find_one
+        if CacheFunctions.FIND_ONE not in self._functions_to_cache:
+            return self.__regular_collection.find_one(filter, *args, **kwargs)
+
         query_info = QueryInfo(query=filter, sort=kwargs.get("sort", None), skip=kwargs.get("skip", None),
                                limit=kwargs.get("limit", None), pipeline=kwargs.get("pipeline", None))
 
@@ -37,6 +49,10 @@ class MongoCollectionWithCache(Collection):
 
     def find(self, filter: dict, *args: Any, **kwargs: Any):
         """Query the collection."""
+        # If the find function is not in the functions to cache, then just return the result of the regular find
+        if CacheFunctions.FIND not in self._functions_to_cache:
+            return self.__regular_collection.find_one(filter, *args, **kwargs)
+
         query_info = QueryInfo(query=filter, sort=kwargs.get("sort", None),
                                skip=kwargs.get("skip", None), limit=kwargs.get("limit", None),
                                pipeline=kwargs.get("pipeline", None))
@@ -60,6 +76,13 @@ class MongoCollectionWithCache(Collection):
         """Perform an aggregation using the aggregation framework on this
            collection.
         """
+        # If the aggregate function is not in the functions to cache, then just return the result of the regular
+        # aggregate
+        if CacheFunctions.AGGREGATE not in self._functions_to_cache:
+            return self.__regular_collection.aggregate(
+                pipeline, session=session, let=let, comment=comment, **kwargs
+            )
+
         pipeline_query_info = QueryInfo(pipeline=pipeline)
         item = self._cache_backend.get(pipeline_query_info)
         if item is not None:
