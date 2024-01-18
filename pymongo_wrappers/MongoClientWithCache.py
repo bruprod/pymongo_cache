@@ -22,4 +22,5 @@ class MongoClientWithCache(MongoClient):
             self._functions_to_cache = functions_to_cache
 
     def __getitem__(self, name: str) -> MongoDatabaseWithCache:
-        return MongoDatabaseWithCache(self, name, cache_backend=self._cache_backend)
+        return MongoDatabaseWithCache(self, name, cache_backend=self._cache_backend,
+                                      functions_to_cache=self._functions_to_cache)

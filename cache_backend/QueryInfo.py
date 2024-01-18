@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional, Mapping, Sequence
 @dataclass
 class QueryInfo:
     """Class representing a pymongo query and its information."""
+    function_name: Optional[str]
     query: Optional[Dict[str, Any]] = None
     projection: Optional[Dict[str, Any]] = None
     sort: Optional[Dict[str, Any]] = None

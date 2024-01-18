@@ -33,10 +33,11 @@ class MongoCollectionWithCache(Collection):
     def find_one(self, filter: Optional[Any] = None, *args: Any, **kwargs: Any):
         """Find a single document in the collection."""
         # If the find_one function is not in the functions to cache, then just return the result of the regular find_one
-        if CacheFunctions.FIND_ONE not in self._functions_to_cache:
+        function_enum = CacheFunctions.FIND_ONE
+        if function_enum not in self._functions_to_cache:
             return self.__regular_collection.find_one(filter, *args, **kwargs)
 
-        query_info = QueryInfo(query=filter, sort=kwargs.get("sort", None), skip=kwargs.get("skip", None),
+        query_info = QueryInfo(function_enum.name, query=filter, sort=kwargs.get("sort", None), skip=kwargs.get("skip", None),
                                limit=kwargs.get("limit", None), pipeline=kwargs.get("pipeline", None))
 
         item = self._cache_backend.get(query_info)
@@ -50,10 +51,11 @@ class MongoCollectionWithCache(Collection):
     def find(self, filter: dict, *args: Any, **kwargs: Any):
         """Query the collection."""
         # If the find function is not in the functions to cache, then just return the result of the regular find
-        if CacheFunctions.FIND not in self._functions_to_cache:
-            return self.__regular_collection.find_one(filter, *args, **kwargs)
+        function_enum = CacheFunctions.FIND
+        if function_enum not in self._functions_to_cache:
+            return self.__regular_collection.find(filter, *args, **kwargs)
 
-        query_info = QueryInfo(query=filter, sort=kwargs.get("sort", None),
+        query_info = QueryInfo(function_enum.name, query=filter, sort=kwargs.get("sort", None),
                                skip=kwargs.get("skip", None), limit=kwargs.get("limit", None),
                                pipeline=kwargs.get("pipeline", None))
 
@@ -78,12 +80,13 @@ class MongoCollectionWithCache(Collection):
         """
         # If the aggregate function is not in the functions to cache, then just return the result of the regular
         # aggregate
-        if CacheFunctions.AGGREGATE not in self._functions_to_cache:
+        function_enum = CacheFunctions.AGGREGATE
+        if function_enum not in self._functions_to_cache:
             return self.__regular_collection.aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
 
-        pipeline_query_info = QueryInfo(pipeline=pipeline)
+        pipeline_query_info = QueryInfo(function_enum.name, pipeline=pipeline)
         item = self._cache_backend.get(pipeline_query_info)
         if item is not None:
             return iter(self._cache_backend.get(item))

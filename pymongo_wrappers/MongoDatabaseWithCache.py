@@ -22,4 +22,5 @@ class MongoDatabaseWithCache(Database):
             self._functions_to_cache = functions_to_cache
 
     def __getitem__(self, item):
-        return MongoCollectionWithCache(self, item, cache_backend=self._cache_backend)
+        return MongoCollectionWithCache(self, item, cache_backend=self._cache_backend,
+                                        functions_to_cache=self._functions_to_cache)
