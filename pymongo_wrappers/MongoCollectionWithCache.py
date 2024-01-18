@@ -27,8 +27,9 @@ class MongoCollectionWithCache(Collection):
         query_info = QueryInfo(query=filter, sort=kwargs.get("sort", None), skip=kwargs.get("skip", None),
                                limit=kwargs.get("limit", None), pipeline=kwargs.get("pipeline", None))
 
-        if self._cache_backend.has_item(query_info):
-            return self._cache_backend.get(query_info)
+        item = self._cache_backend.get(query_info)
+        if item is not None:
+            return item
         else:
             result = self.__regular_collection.find_one(filter, *args, **kwargs)
             self._cache_backend.set(query_info, result)
@@ -40,8 +41,9 @@ class MongoCollectionWithCache(Collection):
                                skip=kwargs.get("skip", None), limit=kwargs.get("limit", None),
                                pipeline=kwargs.get("pipeline", None))
 
-        if self._cache_backend.has_item(query_info):
-            return iter(self._cache_backend.get(query_info))
+        item = self._cache_backend.get(query_info)
+        if item is not None:
+            return iter(item)
         else:
             result = self.__regular_collection.find(filter, *args, **kwargs)
             self._cache_backend.set(query_info, list(result))
@@ -59,8 +61,9 @@ class MongoCollectionWithCache(Collection):
            collection.
         """
         pipeline_query_info = QueryInfo(pipeline=pipeline)
-        if self._cache_backend.has_item(pipeline_query_info):
-            return iter(self._cache_backend.get(pipeline_query_info))
+        item = self._cache_backend.get(pipeline_query_info)
+        if item is not None:
+            return iter(self._cache_backend.get(item))
         else:
             result = self.__regular_collection.aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs

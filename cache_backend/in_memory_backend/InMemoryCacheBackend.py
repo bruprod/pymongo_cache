@@ -41,7 +41,3 @@ class InMemoryCacheBackend(CacheBackendBase):
     def get_all(self) -> Dict[QueryInfo, Any]:
         """Get all the values from the cache."""
         return self._cache
-
-    def has_item(self, key: QueryInfo) -> bool:
-        """Check if the cache has the item."""
-        return key in self._cache

@@ -22,11 +22,6 @@ class CacheBackendBase:
         self.ttl = ttl
 
     @abstractmethod
-    def has_item(self, key: QueryInfo) -> bool:
-        """Check if the cache has the item."""
-        pass
-
-    @abstractmethod
     def get(self, key: QueryInfo) -> Optional[Any]:
         """Get the value from the cache."""
         pass
