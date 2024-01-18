@@ -1,6 +1,7 @@
 """Base class for cache backends."""
-
+import time
 from abc import abstractmethod
+from threading import Thread
 from typing import Any, Dict, Optional
 
 from pymongo.collection import Collection
@@ -14,13 +15,18 @@ class CacheBackendBase:
     max_item_size: int = 0
     ttl: int = 0
     max_num_items: int = 0
+    _cache_cleanup_thread: Any = None
+    _cache_cleanup_cycle_time: int = 0  # In seconds
 
     def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
-                 max_num_items: int = 1000):
+                 max_num_items: int = 1000, cache_cleanup_cycle_time: int = 1):
         self.collection = collection
         self.max_item_size = max_item_size
         self.max_num_items = max_num_items
         self.ttl = ttl
+        self._cache_cleanup_thread = Thread(target=self._cache_cleanup, daemon=True)
+        self._cache_cleanup_thread.start()
+        self._cache_cleanup_cycle_time = cache_cleanup_cycle_time
 
     @abstractmethod
     def get(self, key: QueryInfo) -> Optional[Any]:
@@ -59,3 +65,15 @@ class CacheBackendBase:
     def set_ttl(self, ttl: int) -> None:
         """Set the TTL for the key."""
         self.ttl = ttl
+
+    @abstractmethod
+    def __cache_cleanup(self) -> None:
+        """Clean up the cache."""
+        pass
+
+    def _cache_cleanup(self) -> None:
+        """Clean up the cache."""
+        while True:
+            print("Running cache cleanup.")
+            self.__cache_cleanup()
+            time.sleep(self._cache_cleanup_cycle_time)

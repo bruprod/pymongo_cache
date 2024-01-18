@@ -67,3 +67,6 @@ class MongoDBCacheBackend(CacheBackendBase):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.clear()
+
+    def __cache_cleanup(self) -> None:
+        print("Cleaning up MongoDB cache backend.")

@@ -13,7 +13,8 @@ class InMemoryCacheBackend(CacheBackendBase):
     """Implementation of the MemoryCacheBackend class, which implements the CacheBackend interface."""
     _cache: Dict[QueryInfo, CacheEntry] = {}
 
-    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1*10**6, max_num_items: int = 1000):
+    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
+                 max_num_items: int = 1000):
         super().__init__(collection, ttl, max_item_size, max_num_items)
         self._cache = {}
 
@@ -46,3 +47,7 @@ class InMemoryCacheBackend(CacheBackendBase):
     def get_all(self) -> Dict[QueryInfo, Any]:
         """Get all the values from the cache."""
         return self._cache
+
+    def __cache_cleanup(self) -> None:
+        """Clean up the cache."""
+        print("Cleaning up cache.")
