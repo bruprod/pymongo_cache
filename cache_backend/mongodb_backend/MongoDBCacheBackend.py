@@ -27,7 +27,7 @@ class MongoDBCacheBackend(CacheBackendBase):
         self._cache_collection = self._get_cache_collection()
 
         self._cache_cleanup_handler = MongoDBCacheCleanupHandler(
-            self.collection, max_item_size, 0,
+            self.collection, max_item_size, max_num_items,
             cleanup_strategy=CleanupStrategy.LRU,
             cache_collection=self._cache_collection
         )
