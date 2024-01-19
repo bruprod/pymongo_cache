@@ -5,8 +5,10 @@ from typing import Dict, Any
 from pymongo.collection import Collection
 
 from cache_backend.CacheBackendBase import CacheBackendBase
+from cache_backend.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.QueryInfo import QueryInfo
+from cache_backend.in_memory_backend.InMemoryCacheCleanupHandler import InMemoryCacheCleanupHandler
 
 
 class InMemoryCacheBackend(CacheBackendBase):
@@ -17,6 +19,9 @@ class InMemoryCacheBackend(CacheBackendBase):
                  max_num_items: int = 1000):
         super().__init__(collection, ttl, max_item_size, max_num_items)
         self._cache = {}
+        self._cache_cleanup_handler = InMemoryCacheCleanupHandler(
+            collection, max_item_size, max_num_items, CleanupStrategy.LRU
+        )
 
     def get(self, key: QueryInfo) -> Any:
         """Get the value from the cache."""
@@ -48,6 +53,6 @@ class InMemoryCacheBackend(CacheBackendBase):
         """Get all the values from the cache."""
         return self._cache
 
-    def __cache_cleanup(self) -> None:
+    def _cache_cleanup_internal(self) -> None:
         """Clean up the cache."""
-        print("Cleaning up cache.")
+        self._cache_cleanup_handler.cleanup_cache()

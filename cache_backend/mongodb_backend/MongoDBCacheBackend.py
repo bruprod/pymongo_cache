@@ -7,10 +7,12 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 
 from cache_backend.CacheBackendBase import CacheBackendBase
+from cache_backend.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.Constants import VALUE, QUERY_INFO, CACHE_DATABASE, CACHE_ENTRIES, COLLECTION_NAME, \
     HASH_VAL
 from cache_backend.QueryInfo import QueryInfo
+from cache_backend.mongodb_backend.MongoDBCacheCleanupHandler import MongoDBCacheCleanupHandler
 
 
 class MongoDBCacheBackend(CacheBackendBase):
@@ -21,6 +23,12 @@ class MongoDBCacheBackend(CacheBackendBase):
                  max_num_items: int = 1000):
         super().__init__(collection, ttl, max_item_size, max_num_items)
         self._cache_collection = self._get_cache_collection()
+
+        self._cache_cleanup_handler = MongoDBCacheCleanupHandler(
+            self.collection, max_item_size, 0,
+            cleanup_strategy=CleanupStrategy.LRU,
+            cache_collection=self._cache_collection
+        )
 
         # Register the clear function to be called when the program exits
         atexit.register(self.clear)
@@ -68,5 +76,6 @@ class MongoDBCacheBackend(CacheBackendBase):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.clear()
 
-    def __cache_cleanup(self) -> None:
-        print("Cleaning up MongoDB cache backend.")
+    def _cache_cleanup_internal(self) -> None:
+        """ Clean up the cache. """
+        self._cache_cleanup_handler.cleanup_cache()

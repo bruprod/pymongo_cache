@@ -1,6 +1,6 @@
 """Base class for cache backends."""
 import time
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 from threading import Thread
 from typing import Any, Dict, Optional
 
@@ -9,7 +9,7 @@ from pymongo.collection import Collection
 from cache_backend.QueryInfo import QueryInfo
 
 
-class CacheBackendBase:
+class CacheBackendBase(metaclass=ABCMeta):
     """Base class for cache backends."""
     collection: Collection = None
     max_item_size: int = 0
@@ -17,6 +17,7 @@ class CacheBackendBase:
     max_num_items: int = 0
     _cache_cleanup_thread: Any = None
     _cache_cleanup_cycle_time: int = 0  # In seconds
+    _cache_cleanup_handler = None
 
     def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
                  max_num_items: int = 1000, cache_cleanup_cycle_time: int = 1):
@@ -67,13 +68,14 @@ class CacheBackendBase:
         self.ttl = ttl
 
     @abstractmethod
-    def __cache_cleanup(self) -> None:
+    def _cache_cleanup_internal(self) -> None:
         """Clean up the cache."""
         pass
 
     def _cache_cleanup(self) -> None:
         """Clean up the cache."""
         while True:
-            print("Running cache cleanup.")
-            self.__cache_cleanup()
+            if self._cache_cleanup_handler is not None:
+                print("Running cache cleanup.")
+                self._cache_cleanup_internal()
             time.sleep(self._cache_cleanup_cycle_time)

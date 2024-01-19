@@ -12,8 +12,9 @@ class CacheEntry:
     value: Any
     collection_name: str
     hash_val: int
-    execution_time: int # in milliseconds
+    execution_time: int  # in milliseconds
     timestamp: datetime = None
+    access_count: int = 0
 
     def __post_init__(self):
         """Initialize the cache entry."""
