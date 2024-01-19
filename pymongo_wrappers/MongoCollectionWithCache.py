@@ -2,7 +2,7 @@
    adds a cache to speed up queries, which are requested multiple times.
 """
 import time
-from typing import Any, Optional, Mapping
+from typing import Any, Optional, Mapping, List
 
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
@@ -21,7 +21,7 @@ class MongoCollectionWithCache(Collection):
     __regular_collection = None
 
     def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
-                 functions_to_cache=None, **kwargs):
+                 functions_to_cache: Optional[List[CacheFunctions]] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(self)
         self.__regular_collection = Collection(self.database, self.name)

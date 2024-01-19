@@ -1,5 +1,6 @@
 """ Class for caching MongoDB queries in a SQLite database. """
 import atexit
+from datetime import datetime
 from typing import Any, Dict
 
 from pymongo import IndexModel, ASCENDING
@@ -10,7 +11,7 @@ from cache_backend.CacheBackendBase import CacheBackendBase
 from cache_backend.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.Constants import VALUE, QUERY_INFO, CACHE_DATABASE, CACHE_ENTRIES, COLLECTION_NAME, \
-    HASH_VAL
+    HASH_VAL, TIMESTAMP, ACCESS_COUNT
 from cache_backend.QueryInfo import QueryInfo
 from cache_backend.mongodb_backend.MongoDBCacheCleanupHandler import MongoDBCacheCleanupHandler
 
@@ -20,8 +21,9 @@ class MongoDBCacheBackend(CacheBackendBase):
     _cache_collection = None
 
     def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
-                 max_num_items: int = 1000):
-        super().__init__(collection, ttl, max_item_size, max_num_items)
+                 max_num_items: int = 1000, cache_cleanup_cycle_time: float = 1):
+        super().__init__(collection, ttl, max_item_size, max_num_items,
+                         cache_cleanup_cycle_time=cache_cleanup_cycle_time)
         self._cache_collection = self._get_cache_collection()
 
         self._cache_cleanup_handler = MongoDBCacheCleanupHandler(
@@ -44,7 +46,16 @@ class MongoDBCacheBackend(CacheBackendBase):
     def get(self, key: QueryInfo) -> Any:
         """ Get the value from the cache. """
         entry = self._cache_collection.find_one({COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()})
+
         if entry is not None:
+            # Update the timestamp and access count when the entry is accessed
+            self._cache_collection.update_one(
+                {COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()},
+                {"$set": {
+                    TIMESTAMP: datetime.now(),
+                    ACCESS_COUNT: entry[ACCESS_COUNT] + 1
+                }}, upsert=False, bypass_document_validation=True
+            )
             return entry[VALUE]
         return None
 

@@ -1,5 +1,5 @@
 """Implementation of the MemoryCacheBackend class, which implements the CacheBackend interface."""
-
+from datetime import datetime
 from typing import Dict, Any
 
 from pymongo.collection import Collection
@@ -16,11 +16,12 @@ class InMemoryCacheBackend(CacheBackendBase):
     _cache: Dict[QueryInfo, CacheEntry] = {}
 
     def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
-                 max_num_items: int = 1000):
-        super().__init__(collection, ttl, max_item_size, max_num_items)
+                 max_num_items: int = 1000, cache_cleanup_cycle_time: float = 1):
+        super().__init__(collection, ttl, max_item_size, max_num_items,
+                         cache_cleanup_cycle_time=cache_cleanup_cycle_time)
         self._cache = {}
         self._cache_cleanup_handler = InMemoryCacheCleanupHandler(
-            collection, max_item_size, max_num_items, CleanupStrategy.LRU
+            collection, max_item_size, max_num_items, cleanup_strategy=CleanupStrategy.LRU,
         )
 
     def get(self, key: QueryInfo) -> Any:
@@ -28,6 +29,9 @@ class InMemoryCacheBackend(CacheBackendBase):
         entry = self._cache.get(key, None)
 
         if entry is not None:
+            # Update the timestamp and access count when the entry is accessed
+            entry.timestamp = datetime.now()
+            entry.access_count += 1
             return entry.value
         return None
 
