@@ -9,4 +9,8 @@ class CacheFunctions(Enum):
     AGGREGATE = 3
 
 
-DEFAULT_CACHE_FUNCTIONS = [CacheFunctions.FIND_ONE, CacheFunctions.FIND, CacheFunctions.AGGREGATE]
+DEFAULT_CACHE_FUNCTIONS = [
+    CacheFunctions.FIND_ONE,
+    CacheFunctions.FIND,
+    CacheFunctions.AGGREGATE,
+]

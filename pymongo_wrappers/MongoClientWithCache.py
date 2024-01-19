@@ -10,13 +10,20 @@ class MongoClientWithCache(MongoClient):
     """
     Mongo client class with cache.
     """
+
     _cache_backend: CacheBackend = CacheBackend.IN_MEMORY
     _functions_to_cache = None
     _database_created = None
-    _cache_cleanup_cycle_time = 5.
+    _cache_cleanup_cycle_time = 5.0
 
-    def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
-                 functions_to_cache=None, cache_cleanup_cycle_time: float = 5., **kwargs):
+    def __init__(
+        self,
+        *args,
+        cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
+        functions_to_cache=None,
+        cache_cleanup_cycle_time: float = 5.0,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self._cache_backend = cache_backend
         if functions_to_cache is None:
@@ -36,7 +43,7 @@ class MongoClientWithCache(MongoClient):
             name,
             cache_backend=self._cache_backend,
             functions_to_cache=self._functions_to_cache,
-            cache_cleanup_cycle_time=self._cache_cleanup_cycle_time
+            cache_cleanup_cycle_time=self._cache_cleanup_cycle_time,
         )
 
         self._database_created[name] = db

@@ -8,20 +8,37 @@ from cache_backend.CacheBackendBase import CacheBackendBase
 from cache_backend.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.QueryInfo import QueryInfo
-from cache_backend.in_memory_backend.InMemoryCacheCleanupHandler import InMemoryCacheCleanupHandler
+from cache_backend.in_memory_backend.InMemoryCacheCleanupHandler import (
+    InMemoryCacheCleanupHandler,
+)
 
 
 class InMemoryCacheBackend(CacheBackendBase):
     """Implementation of the MemoryCacheBackend class, which implements the CacheBackend interface."""
+
     _cache: Dict[QueryInfo, CacheEntry] = {}
 
-    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
-                 max_num_items: int = 1000, cache_cleanup_cycle_time: float = 1):
-        super().__init__(collection, ttl, max_item_size, max_num_items,
-                         cache_cleanup_cycle_time=cache_cleanup_cycle_time)
+    def __init__(
+        self,
+        collection: Collection,
+        ttl: int = 0,
+        max_item_size: int = 1 * 10**6,
+        max_num_items: int = 1000,
+        cache_cleanup_cycle_time: float = 1,
+    ):
+        super().__init__(
+            collection,
+            ttl,
+            max_item_size,
+            max_num_items,
+            cache_cleanup_cycle_time=cache_cleanup_cycle_time,
+        )
         self._cache = {}
         self._cache_cleanup_handler = InMemoryCacheCleanupHandler(
-            collection, max_item_size, max_num_items, cleanup_strategy=CleanupStrategy.LRU,
+            collection,
+            max_item_size,
+            max_num_items,
+            cleanup_strategy=CleanupStrategy.LRU,
         )
 
     def get(self, key: QueryInfo) -> Any:
@@ -35,14 +52,18 @@ class InMemoryCacheBackend(CacheBackendBase):
             return entry.value
         return None
 
-    def set(self, key: QueryInfo, value: Any, execution_time_millis, ttl: int = None) -> None:
+    def set(
+        self, key: QueryInfo, value: Any, execution_time_millis, ttl: int = None
+    ) -> None:
         """Set the value in the cache.
         :param ttl: The time to live for the key.
         :param value: The value to set.
         :param key: The key to set.
         :param execution_time_millis: The execution time of the query in milliseconds.
         """
-        self._cache[key] = CacheEntry(key, value, self.collection.name, key.__hash__(), execution_time_millis)
+        self._cache[key] = CacheEntry(
+            key, value, self.collection.name, key.__hash__(), execution_time_millis
+        )
 
     def delete(self, key: QueryInfo) -> None:
         """Delete the value from the cache."""

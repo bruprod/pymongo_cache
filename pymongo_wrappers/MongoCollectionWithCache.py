@@ -19,16 +19,19 @@ class MongoCollectionWithCache(Collection):
     _cache_backend: CacheBackendBase = None
     _functions_to_cache = None
     __regular_collection = None
-    _cache_cleanup_cycle_time = 5.
+    _cache_cleanup_cycle_time = 5.0
 
-    def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
-                 functions_to_cache: Optional[List[CacheFunctions]] = None,
-                 cache_cleanup_cycle_time: float = 5.,
-                 **kwargs):
+    def __init__(
+        self,
+        *args,
+        cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
+        functions_to_cache: Optional[List[CacheFunctions]] = None,
+        cache_cleanup_cycle_time: float = 5.0,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(
-            self,
-            cache_cleanup_cycle_time=cache_cleanup_cycle_time
+            self, cache_cleanup_cycle_time=cache_cleanup_cycle_time
         )
         self.__regular_collection = Collection(self.database, self.name)
 
@@ -52,7 +55,7 @@ class MongoCollectionWithCache(Collection):
             sort=kwargs.get("sort", None),
             skip=kwargs.get("skip", None),
             limit=kwargs.get("limit", None),
-            pipeline=kwargs.get("pipeline", None)
+            pipeline=kwargs.get("pipeline", None),
         )
 
         item = self._cache_backend.get(query_info)
@@ -73,9 +76,14 @@ class MongoCollectionWithCache(Collection):
         if function_enum not in self._functions_to_cache:
             return self.__regular_collection.find(filter, *args, **kwargs)
 
-        query_info = QueryInfo(function_enum.name, query=filter, sort=kwargs.get("sort", None),
-                               skip=kwargs.get("skip", None), limit=kwargs.get("limit", None),
-                               pipeline=kwargs.get("pipeline", None))
+        query_info = QueryInfo(
+            function_enum.name,
+            query=filter,
+            sort=kwargs.get("sort", None),
+            skip=kwargs.get("skip", None),
+            limit=kwargs.get("limit", None),
+            pipeline=kwargs.get("pipeline", None),
+        )
 
         item = self._cache_backend.get(query_info)
         if item is not None:
@@ -89,15 +97,15 @@ class MongoCollectionWithCache(Collection):
             return iter(self._cache_backend.get(query_info))
 
     def aggregate(
-            self,
-            pipeline: _Pipeline,
-            session: Optional[ClientSession] = None,
-            let: Optional[Mapping[str, Any]] = None,
-            comment: Optional[Any] = None,
-            **kwargs: Any,
+        self,
+        pipeline: _Pipeline,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+        **kwargs: Any,
     ) -> CommandCursor:
         """Perform an aggregation using the aggregation framework on this
-           collection.
+        collection.
         """
         # If the aggregate function is not in the functions to cache, then just return the result of the regular
         # aggregate
