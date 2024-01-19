@@ -97,7 +97,7 @@ class MongoCollectionWithCache(Collection):
         pipeline_query_info = QueryInfo(function_enum.name, pipeline=pipeline)
         item = self._cache_backend.get(pipeline_query_info)
         if item is not None:
-            return iter(self._cache_backend.get(item))
+            return iter(item)
         else:
             start = time.time_ns()
             result = self.__regular_collection.aggregate(
