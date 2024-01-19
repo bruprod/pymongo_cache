@@ -29,10 +29,17 @@ to keep them alive.
     - all functions which are not listed above are not cached and are directly forwarded to the pymongo collection class
 
 - Parameters for the MongoClientWithCache
-    - cache_backend: The cache backend to use (default: InMemoryCacheBackend)
-    - cache_strategy: The cache strategy to use (default: LRU)
-    - functions_to_cache: The functions which should be cached (default: ["find", "find_one", "aggregate"])
+    - cache_backend: The cache backend to use (default: CacheBackend.IN_MEMORY)
+    - cache_strategy: The cache strategy to use (default: CacheStrategy.LRU)
+    - functions_to_cache: The functions which should be cached (default: CacheFunction.FIND, CacheFunction.FIND_ONE, CacheFunction.AGGREGATE)
     - cache_cleanup_cycle_time: The interval in seconds in which the cleanup function is called (default: 5.)
+    - max_num_items: The maximum size of the cache (default: 1000)
+    - max_item_size: The maximum size of an item in the cache (default: 1000000)
+    - ttl: The time to live of an item in the cache in seconds (default: None)
+
+Those parameters can be set in the constructor of the MongoClientWithCache and are forwarded to the 
+MongoCollectionWithCache. So the parameters directly steer the behaviour of the MongoCollectionWithCache.
+
 ## Requirements
 
 - pymongo must be installed
@@ -79,9 +86,10 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 ## Outlook
 
 - Handler for change streams of the collections, which invalidates the cache
-- Implementing a more sufficient cleanup strategy for the cache
+- Implementing a more sufficient cleanup strategy for the cache, which takes the execution time and the frequency of the
+  function calls into account
 - Adding Cursor support for find and aggregate
-- TTL to the cache entries
+- Support for TTL to the cache entries
 - Supporting a max_item_size for the cache entries
 - Adding a cache-backend for sqlite
 
