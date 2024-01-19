@@ -3,7 +3,7 @@ import atexit
 from datetime import datetime
 from typing import Any, Dict
 
-from pymongo import IndexModel, ASCENDING
+from pymongo import IndexModel, ASCENDING, WriteConcern
 from pymongo.collection import Collection
 from pymongo.database import Database
 
@@ -99,7 +99,9 @@ class MongoDBCacheBackend(CacheBackendBase):
         cache_entry = CacheEntry(
             key, value, self.collection.name, key.__hash__(), execution_time_millis
         )
-        self._cache_collection.insert_one(
+
+        # Do not wait for writing to be acknowledged, such that we don't slow down the query
+        self._cache_collection.with_options(write_concern=WriteConcern(w=0)).insert_one(
             cache_entry.to_dict(), bypass_document_validation=True
         )
 
