@@ -2,7 +2,7 @@
 import enum
 from typing import Type
 
-from cache_backend.CacheBackendBase import CacheBackendBase
+from cache_backend.base.CacheBackendBase import CacheBackendBase
 
 
 class CacheBackend(enum.Enum):

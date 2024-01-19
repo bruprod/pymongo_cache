@@ -3,7 +3,7 @@ from typing import List, Dict
 
 from pymongo.collection import Collection
 
-from cache_backend.CacheCleanupHandlerBase import (
+from cache_backend.base.CacheCleanupHandlerBase import (
     CleanupStrategy,
     CacheCleanupHandlerBase,
 )

@@ -10,7 +10,7 @@ from pymongo.command_cursor import CommandCursor
 from pymongo.typings import _Pipeline
 
 from cache_backend.CacheBackend import CacheBackend, CacheBackendFactory
-from cache_backend.CacheBackendBase import CacheBackendBase
+from cache_backend.base.CacheBackendBase import CacheBackendBase
 from cache_backend.QueryInfo import QueryInfo
 from pymongo_wrappers.CacheFunctions import DEFAULT_CACHE_FUNCTIONS, CacheFunctions
 
@@ -20,6 +20,9 @@ class MongoCollectionWithCache(Collection):
     _functions_to_cache = None
     __regular_collection = None
     _cache_cleanup_cycle_time = 5.0
+    _max_num_items = 1000
+    _max_item_size = 1 * 10**6
+    _ttl = 0
 
     def __init__(
         self,
@@ -27,11 +30,18 @@ class MongoCollectionWithCache(Collection):
         cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
         functions_to_cache: Optional[List[CacheFunctions]] = None,
         cache_cleanup_cycle_time: float = 5.0,
+        max_num_items: int = 1000,
+        max_item_size: int = 1 * 10**6,
+        ttl: int = 0,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(
-            self, cache_cleanup_cycle_time=cache_cleanup_cycle_time
+            self,
+            cache_cleanup_cycle_time=cache_cleanup_cycle_time,
+            max_num_items=max_num_items,
+            max_item_size=max_item_size,
+            ttl=ttl,
         )
         self.__regular_collection = Collection(self.database, self.name)
 
@@ -41,6 +51,9 @@ class MongoCollectionWithCache(Collection):
             self._functions_to_cache = functions_to_cache
 
         self._cache_cleanup_cycle_time = cache_cleanup_cycle_time
+        self._max_num_items = max_num_items
+        self._max_item_size = max_item_size
+        self._ttl = ttl
 
     def find_one(self, filter: Optional[Any] = None, *args: Any, **kwargs: Any):
         """Find a single document in the collection."""

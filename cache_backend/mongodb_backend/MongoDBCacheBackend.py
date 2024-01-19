@@ -7,8 +7,8 @@ from pymongo import IndexModel, ASCENDING
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-from cache_backend.CacheBackendBase import CacheBackendBase
-from cache_backend.CacheCleanupHandlerBase import CleanupStrategy
+from cache_backend.base.CacheBackendBase import CacheBackendBase
+from cache_backend.base.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.Constants import (
     VALUE,
