@@ -19,17 +19,25 @@ class MongoCollectionWithCache(Collection):
     _cache_backend: CacheBackendBase = None
     _functions_to_cache = None
     __regular_collection = None
+    _cache_cleanup_cycle_time = 5.
 
     def __init__(self, *args, cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
-                 functions_to_cache: Optional[List[CacheFunctions]] = None, **kwargs):
+                 functions_to_cache: Optional[List[CacheFunctions]] = None,
+                 cache_cleanup_cycle_time: float = 5.,
+                 **kwargs):
         super().__init__(*args, **kwargs)
-        self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(self)
+        self._cache_backend = CacheBackendFactory.get_cache_backend(cache_backend)(
+            self,
+            cache_cleanup_cycle_time=cache_cleanup_cycle_time
+        )
         self.__regular_collection = Collection(self.database, self.name)
 
         if functions_to_cache is None:
             self._functions_to_cache = DEFAULT_CACHE_FUNCTIONS
         else:
             self._functions_to_cache = functions_to_cache
+
+        self._cache_cleanup_cycle_time = cache_cleanup_cycle_time
 
     def find_one(self, filter: Optional[Any] = None, *args: Any, **kwargs: Any):
         """Find a single document in the collection."""
@@ -38,9 +46,14 @@ class MongoCollectionWithCache(Collection):
         if function_enum not in self._functions_to_cache:
             return self.__regular_collection.find_one(filter, *args, **kwargs)
 
-        query_info = QueryInfo(function_enum.name, query=filter, sort=kwargs.get("sort", None),
-                               skip=kwargs.get("skip", None),
-                               limit=kwargs.get("limit", None), pipeline=kwargs.get("pipeline", None))
+        query_info = QueryInfo(
+            function_enum.name,
+            query=filter,
+            sort=kwargs.get("sort", None),
+            skip=kwargs.get("skip", None),
+            limit=kwargs.get("limit", None),
+            pipeline=kwargs.get("pipeline", None)
+        )
 
         item = self._cache_backend.get(query_info)
         if item is not None:
