@@ -7,8 +7,6 @@ from pymongo import IndexModel, ASCENDING
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-from cache_backend.base.CacheBackendBase import CacheBackendBase
-from cache_backend.base.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.Constants import (
     VALUE,
@@ -21,6 +19,8 @@ from cache_backend.Constants import (
     ACCESS_COUNT,
 )
 from cache_backend.QueryInfo import QueryInfo
+from cache_backend.base.CacheBackendBase import CacheBackendBase
+from cache_backend.base.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.mongodb_backend.MongoDBCacheCleanupHandler import (
     MongoDBCacheCleanupHandler,
 )
@@ -76,23 +76,13 @@ class MongoDBCacheBackend(CacheBackendBase):
 
     def get(self, key: QueryInfo) -> Any:
         """Get the value from the cache."""
-        entry = self._cache_collection.find_one(
-            {COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()}
+        entry = self._cache_collection.find_one_and_update(
+            {COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()},
+            {"$inc": {ACCESS_COUNT: 1}, "$set": {TIMESTAMP: datetime.now()}},
+            return_document=True,
         )
 
         if entry is not None:
-            # Update the timestamp and access count when the entry is accessed
-            self._cache_collection.update_one(
-                {COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()},
-                {
-                    "$set": {
-                        TIMESTAMP: datetime.now(),
-                        ACCESS_COUNT: entry[ACCESS_COUNT] + 1,
-                    }
-                },
-                upsert=False,
-                bypass_document_validation=True,
-            )
             return entry[VALUE]
         return None
 
@@ -109,11 +99,8 @@ class MongoDBCacheBackend(CacheBackendBase):
         cache_entry = CacheEntry(
             key, value, self.collection.name, key.__hash__(), execution_time_millis
         )
-        self._cache_collection.update_one(
-            {COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()},
-            {"$set": cache_entry.to_dict()},
-            upsert=True,
-            bypass_document_validation=True,
+        self._cache_collection.insert_one(
+            cache_entry.to_dict(), bypass_document_validation=True
         )
 
     def delete(self, key: QueryInfo) -> None:
