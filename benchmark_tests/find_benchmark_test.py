@@ -140,7 +140,7 @@ def simple_find_test(
 
 
 def main():
-    cache_backend_to_use = CacheBackend.MONGODB
+    cache_backend_to_use = CacheBackend.IN_MEMORY
 
     simple_find_one_test(
         "localhost",
