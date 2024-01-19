@@ -3,17 +3,26 @@ from typing import List, Dict
 
 from pymongo.collection import Collection
 
-from cache_backend.CacheCleanupHandlerBase import CleanupStrategy, CacheCleanupHandlerBase
+from cache_backend.CacheCleanupHandlerBase import (
+    CleanupStrategy,
+    CacheCleanupHandlerBase,
+)
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.QueryInfo import QueryInfo
 
 
 class InMemoryCacheCleanupHandler(CacheCleanupHandlerBase):
     """Implements the cleanup handler for the in-memory cache."""
+
     _cache: Dict[QueryInfo, CacheEntry] = {}
 
-    def __init__(self, collection: Collection, max_item_size: int = 1 * 10 ** 6, max_num_items: int = 1000,
-                 cleanup_strategy: CleanupStrategy = CleanupStrategy.LRU):
+    def __init__(
+        self,
+        collection: Collection,
+        max_item_size: int = 1 * 10**6,
+        max_num_items: int = 1000,
+        cleanup_strategy: CleanupStrategy = CleanupStrategy.LRU,
+    ):
         super().__init__(collection, max_item_size, max_num_items, cleanup_strategy)
         self._cache = {}
 

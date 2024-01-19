@@ -10,6 +10,7 @@ from cache_backend.QueryInfo import QueryInfo
 
 class CleanupStrategy(enum.Enum):
     """Defines the cleanup strategy for the cache."""
+
     LRU = 0
     LFU = 1
     EXECUTION_TIME = 2
@@ -17,18 +18,26 @@ class CleanupStrategy(enum.Enum):
 
 class CacheCleanupHandlerBase(metaclass=ABCMeta):
     """Implements a handler for the cleanup of the cache."""
+
     _collection: Collection = None
     _max_item_size: int = 0
     _max_num_items: int = 0
 
-    def __init__(self, collection: Collection, max_item_size: int = 1 * 10 ** 6, max_num_items: int = 1000,
-                 cleanup_strategy: CleanupStrategy = CleanupStrategy.LRU):
+    def __init__(
+        self,
+        collection: Collection,
+        max_item_size: int = 1 * 10**6,
+        max_num_items: int = 1000,
+        cleanup_strategy: CleanupStrategy = CleanupStrategy.LRU,
+    ):
         self._collection = collection
         self._max_item_size = max_item_size
         self._max_num_items = max_num_items
         self._cleanup_strategy = cleanup_strategy
 
-    def _get_entries_to_remove_from_cache(self, entries_to_cleanup: int) -> List[QueryInfo]:
+    def _get_entries_to_remove_from_cache(
+        self, entries_to_cleanup: int
+    ) -> List[QueryInfo]:
         """Get the entries to remove from the cache."""
         if self._cleanup_strategy == CleanupStrategy.LRU:
             return self.get_n_oldest_entries(entries_to_cleanup)
