@@ -79,10 +79,9 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 ## Outlook
 
 - Handler for change streams of the collections, which invalidates the cache
-- Adding a cache-backend for sqlite
 - Implementing a more sufficient cleanup strategy for the cache
 - Adding Cursor support for find and aggregate
 - TTL to the cache entries
 - Supporting a max_item_size for the cache entries
-- Being able to set the cache size on MongoClientWithCache
+- Adding a cache-backend for sqlite
 
