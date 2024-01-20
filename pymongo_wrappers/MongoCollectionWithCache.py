@@ -5,10 +5,11 @@ import time
 from typing import Any, Optional, Mapping, List, Iterable, Union, Sequence
 
 from bson import _DocumentType, RawBSONDocument
+from pymongo import ReturnDocument
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
 from pymongo.command_cursor import CommandCursor
-from pymongo.operations import _IndexKeyHint
+from pymongo.operations import _IndexKeyHint, _IndexList
 from pymongo.results import (
     InsertManyResult,
     InsertOneResult,
@@ -351,4 +352,124 @@ class MongoCollectionWithCache(Collection):
 
         return self.__regular_collection.drop(
             session=session, comment=comment, encrypted_fields=encrypted_fields
+        )
+
+    def find_one_and_delete(
+        self,
+        filter: Mapping[str, Any],
+        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
+        sort: Optional[_IndexList] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+        **kwargs: Any,
+    ) -> _DocumentType:
+        """Find a single document and delete it, returning the document."""
+        # Override the find_one_and_delete function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.find_one_and_delete(
+            filter,
+            projection=projection,
+            sort=sort,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+            **kwargs,
+        )
+
+    def find_one_and_replace(
+        self,
+        filter: Mapping[str, Any],
+        replacement: Mapping[str, Any],
+        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
+        sort: Optional[_IndexList] = None,
+        upsert: bool = False,
+        return_document: bool = ReturnDocument.BEFORE,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+        **kwargs: Any,
+    ) -> _DocumentType:
+        """Find a single document and replace it, returning either the original or the replaced document."""
+        # Override the find_one_and_replace function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.find_one_and_replace(
+            filter,
+            replacement,
+            projection=projection,
+            sort=sort,
+            upsert=upsert,
+            return_document=return_document,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+            **kwargs,
+        )
+
+    def find_one_and_update(
+        self,
+        filter: Mapping[str, Any],
+        update: Union[Mapping[str, Any], _Pipeline],
+        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
+        sort: Optional[_IndexList] = None,
+        upsert: bool = False,
+        return_document: bool = ReturnDocument.BEFORE,
+        array_filters: Optional[Sequence[Mapping[str, Any]]] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+        **kwargs: Any,
+    ) -> _DocumentType:
+        """Find a single document and update it, returning either the original or the updated document."""
+        # Override the find_one_and_update function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.find_one_and_update(
+            filter,
+            update,
+            projection=projection,
+            sort=sort,
+            upsert=upsert,
+            return_document=return_document,
+            array_filters=array_filters,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+            **kwargs,
+        )
+
+    def replace_one(
+        self,
+        filter: Mapping[str, Any],
+        replacement: Mapping[str, Any],
+        upsert: bool = False,
+        bypass_document_validation: bool = False,
+        collation: Optional[_CollationIn] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+    ) -> UpdateResult:
+        """Replace a single document matching the filter."""
+        # Override the replace_one function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.replace_one(
+            filter,
+            replacement,
+            upsert=upsert,
+            bypass_document_validation=bypass_document_validation,
+            collation=collation,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
         )
