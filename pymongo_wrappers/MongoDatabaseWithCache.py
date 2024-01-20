@@ -3,6 +3,7 @@ from pymongo.database import Database
 
 from cache_backend.CacheBackend import CacheBackend
 from pymongo_wrappers.CacheFunctions import DEFAULT_CACHE_FUNCTIONS
+from pymongo_wrappers.DefaultCachingBehavior import DefaultCachingBehavior
 from pymongo_wrappers.MongoCollectionWithCache import MongoCollectionWithCache
 
 
@@ -18,6 +19,7 @@ class MongoDatabaseWithCache(Database):
     _max_num_items = 1000
     _max_item_size = 1 * 10**6
     _ttl = 0
+    _default_caching_behavior = None
 
     def __init__(
         self,
@@ -28,6 +30,7 @@ class MongoDatabaseWithCache(Database):
         max_num_items: int = 1000,
         max_item_size: int = 1 * 10**6,
         ttl: int = 0,
+        default_caching_behavior: bool = DefaultCachingBehavior.CACHE_ALL,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -41,6 +44,7 @@ class MongoDatabaseWithCache(Database):
         self._max_num_items = max_num_items
         self._max_item_size = max_item_size
         self._ttl = ttl
+        self._default_caching_behavior = default_caching_behavior
 
     def __getitem__(self, item):
         if item in self._collections_created:
@@ -52,6 +56,10 @@ class MongoDatabaseWithCache(Database):
             cache_backend=self._cache_backend,
             functions_to_cache=self._functions_to_cache,
             cache_cleanup_cycle_time=self._cache_cleanup_cycle_time,
+            max_num_items=self._max_num_items,
+            max_item_size=self._max_item_size,
+            ttl=self._ttl,
+            default_caching_behavior=self._default_caching_behavior,
         )
         self._collections_created[item] = coll
 

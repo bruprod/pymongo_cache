@@ -10,9 +10,10 @@ from pymongo.command_cursor import CommandCursor
 from pymongo.typings import _Pipeline
 
 from cache_backend.CacheBackend import CacheBackend, CacheBackendFactory
-from cache_backend.base.CacheBackendBase import CacheBackendBase
 from cache_backend.QueryInfo import QueryInfo
+from cache_backend.base.CacheBackendBase import CacheBackendBase
 from pymongo_wrappers.CacheFunctions import DEFAULT_CACHE_FUNCTIONS, CacheFunctions
+from pymongo_wrappers.DefaultCachingBehavior import DefaultCachingBehavior
 
 
 class MongoCollectionWithCache(Collection):
@@ -23,6 +24,7 @@ class MongoCollectionWithCache(Collection):
     _max_num_items = 1000
     _max_item_size = 1 * 10**6
     _ttl = 0
+    _default_caching_behavior = None
 
     def __init__(
         self,
@@ -33,6 +35,7 @@ class MongoCollectionWithCache(Collection):
         max_num_items: int = 1000,
         max_item_size: int = 1 * 10**6,
         ttl: int = 0,
+        default_caching_behavior: bool = DefaultCachingBehavior.CACHE_ALL,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -55,11 +58,35 @@ class MongoCollectionWithCache(Collection):
         self._max_item_size = max_item_size
         self._ttl = ttl
 
-    def find_one(self, filter: Optional[Any] = None, *args: Any, **kwargs: Any):
-        """Find a single document in the collection."""
+    def _check_caching_allowed(self, function_enum: CacheFunctions) -> bool:
+        """Checks if caching is allowed for the given function and due to the default caching behavior."""
+        if function_enum in self._functions_to_cache:
+            return True
+        elif self._default_caching_behavior == DefaultCachingBehavior.CACHE_ALL:
+            return True
+        elif self._default_caching_behavior == DefaultCachingBehavior.CACHE_NONE:
+            return False
+        else:
+            raise ValueError(
+                f"Invalid default caching behavior: {self._default_caching_behavior}"
+            )
+
+    def find_one(
+        self,
+        *args: Any,
+        filter: Optional[Any] = None,
+        cache_always: bool = True,
+        **kwargs: Any,
+    ):
+        """
+        Find a single document in the collection.
+        :param cache_always: If true, the query will always be cached, even
+            if the function is not in the functions to cache or the default caching behavior is CACHE_NONE.
+        :param filter: A query expression for MongoDb.
+        """
         # If the find_one function is not in the functions to cache, then just return the result of the regular find_one
         function_enum = CacheFunctions.FIND_ONE
-        if function_enum not in self._functions_to_cache:
+        if not self._check_caching_allowed(function_enum) and not cache_always:
             return self.__regular_collection.find_one(filter, *args, **kwargs)
 
         query_info = QueryInfo(
@@ -82,11 +109,22 @@ class MongoCollectionWithCache(Collection):
             self._cache_backend.set(query_info, result, exec_in_ms)
             return result
 
-    def find(self, filter: dict, *args: Any, **kwargs: Any):
-        """Query the collection."""
+    def find(
+        self,
+        *args: Any,
+        filter: Optional[dict] = None,
+        cache_always: bool = True,
+        **kwargs: Any,
+    ):
+        """
+        Query the collection.
+        :param cache_always: If true, the query will always be cached, even
+            if the function is not in the functions to cache or the default caching behavior is CACHE_NONE.
+        :param filter: A query expression for MongoDb.
+        """
         # If the find function is not in the functions to cache, then just return the result of the regular find
         function_enum = CacheFunctions.FIND
-        if function_enum not in self._functions_to_cache:
+        if not self._check_caching_allowed(function_enum) and not cache_always:
             return self.__regular_collection.find(filter, *args, **kwargs)
 
         query_info = QueryInfo(
@@ -115,15 +153,18 @@ class MongoCollectionWithCache(Collection):
         session: Optional[ClientSession] = None,
         let: Optional[Mapping[str, Any]] = None,
         comment: Optional[Any] = None,
+        cache_always: bool = True,
         **kwargs: Any,
     ) -> CommandCursor:
-        """Perform an aggregation using the aggregation framework on this
-        collection.
+        """
+        Perform an aggregation using the aggregation framework on this collection.
+        :param cache_always: If true, the query will always be cached, even
+            if the function is not in the functions to cache or the default caching behavior is CACHE_NONE.
         """
         # If the aggregate function is not in the functions to cache, then just return the result of the regular
         # aggregate
         function_enum = CacheFunctions.AGGREGATE
-        if function_enum not in self._functions_to_cache:
+        if not self._check_caching_allowed(function_enum) and not cache_always:
             return self.__regular_collection.aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
