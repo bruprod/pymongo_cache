@@ -11,6 +11,7 @@ from cache_backend.QueryInfo import QueryInfo
 
 class CacheBackendBase(metaclass=ABCMeta):
     """Base class for cache backends."""
+
     collection: Collection = None
     max_item_size: int = 0
     ttl: int = 0
@@ -19,8 +20,14 @@ class CacheBackendBase(metaclass=ABCMeta):
     _cache_cleanup_cycle_time: float = 0  # In seconds
     _cache_cleanup_handler = None
 
-    def __init__(self, collection: Collection, ttl: int = 0, max_item_size: int = 1 * 10 ** 6,
-                 max_num_items: int = 1000, cache_cleanup_cycle_time: float = 1):
+    def __init__(
+        self,
+        collection: Collection,
+        ttl: int = 0,
+        max_item_size: int = 1 * 10**6,
+        max_num_items: int = 1000,
+        cache_cleanup_cycle_time: float = 1,
+    ):
         self.collection = collection
         self.max_item_size = max_item_size
         self.max_num_items = max_num_items
@@ -35,7 +42,13 @@ class CacheBackendBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set(self, key: QueryInfo, value: Any, execution_time_millis, ttl: Optional[int] = None) -> None:
+    def set(
+        self,
+        key: QueryInfo,
+        value: Any,
+        execution_time_millis: int,
+        ttl: Optional[int] = None,
+    ) -> None:
         """Set the value in the cache.
         :param ttl: The time to live for the key.
         :param value: The value to set.

@@ -2,12 +2,20 @@
    adds a cache to speed up queries, which are requested multiple times.
 """
 import time
-from typing import Any, Optional, Mapping, List
+from typing import Any, Optional, Mapping, List, Iterable, Union, Sequence
 
+from bson import _DocumentType, RawBSONDocument
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
 from pymongo.command_cursor import CommandCursor
-from pymongo.typings import _Pipeline
+from pymongo.operations import _IndexKeyHint
+from pymongo.results import (
+    InsertManyResult,
+    InsertOneResult,
+    UpdateResult,
+    DeleteResult,
+)
+from pymongo.typings import _Pipeline, _CollationIn
 
 from cache_backend.CacheBackend import CacheBackend, CacheBackendFactory
 from cache_backend.QueryInfo import QueryInfo
@@ -182,3 +190,165 @@ class MongoCollectionWithCache(Collection):
             exec_in_ms = (end - start) / 1e6
             self._cache_backend.set(pipeline_query_info, list(result), exec_in_ms)
             return iter(self._cache_backend.get(pipeline_query_info))
+
+    def insert_many(
+        self,
+        documents: Iterable[Union[_DocumentType, RawBSONDocument]],
+        ordered: bool = True,
+        bypass_document_validation: bool = False,
+        session: Optional[ClientSession] = None,
+        comment: Optional[Any] = None,
+    ) -> InsertManyResult:
+        """Insert an iterable of documents."""
+
+        # Override the insert_many function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.insert_many(
+            documents,
+            ordered=ordered,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
+            comment=comment,
+        )
+
+    def insert_one(
+        self,
+        document: Union[_DocumentType, RawBSONDocument],
+        bypass_document_validation: bool = False,
+        session: Optional[ClientSession] = None,
+        comment: Optional[Any] = None,
+    ) -> InsertOneResult:
+        """Insert a single document."""
+
+        # Override the insert_one function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.insert_one(
+            document,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
+            comment=comment,
+        )
+
+    def update_one(
+        self,
+        filter: Mapping[str, Any],
+        update: Union[Mapping[str, Any], _Pipeline],
+        upsert: bool = False,
+        bypass_document_validation: bool = False,
+        collation: Optional[_CollationIn] = None,
+        array_filters: Optional[Sequence[Mapping[str, Any]]] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+    ) -> UpdateResult:
+        """Update a single document matching the filter."""
+
+        # Override the update_one function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.update_one(
+            filter,
+            update,
+            upsert=upsert,
+            bypass_document_validation=bypass_document_validation,
+            collation=collation,
+            array_filters=array_filters,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+        )
+
+    def update_many(
+        self,
+        filter: Mapping[str, Any],
+        update: Union[Mapping[str, Any], _Pipeline],
+        upsert: bool = False,
+        array_filters: Optional[Sequence[Mapping[str, Any]]] = None,
+        bypass_document_validation: Optional[bool] = None,
+        collation: Optional[_CollationIn] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+    ) -> UpdateResult:
+        """Update one or more documents that match the filter."""
+
+        # Override the update_many function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.update_many(
+            filter,
+            update,
+            upsert=upsert,
+            array_filters=array_filters,
+            bypass_document_validation=bypass_document_validation,
+            collation=collation,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+        )
+
+    def delete_many(
+        self,
+        filter: Mapping[str, Any],
+        collation: Optional[_CollationIn] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+    ) -> DeleteResult:
+        """Delete documents in the collection."""
+
+        # Override the delete_many function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.delete_many(
+            filter,
+            collation=collation,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+        )
+
+    def delete_one(
+        self,
+        filter: Mapping[str, Any],
+        collation: Optional[_CollationIn] = None,
+        hint: Optional[_IndexKeyHint] = None,
+        session: Optional[ClientSession] = None,
+        let: Optional[Mapping[str, Any]] = None,
+        comment: Optional[Any] = None,
+    ) -> DeleteResult:
+        """Delete a single document in the collection."""
+
+        # Override the delete_one function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.delete_one(
+            filter,
+            collation=collation,
+            hint=hint,
+            session=session,
+            let=let,
+            comment=comment,
+        )
+
+    def drop(
+        self,
+        session: Optional[ClientSession] = None,
+        comment: Optional[Any] = None,
+        encrypted_fields: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        """Drop this collection."""
+        # Override the drop function, such that we can clear the cache
+        self._cache_backend.clear()
+
+        return self.__regular_collection.drop(
+            session=session, comment=comment, encrypted_fields=encrypted_fields
+        )

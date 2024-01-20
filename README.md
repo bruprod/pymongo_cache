@@ -10,10 +10,22 @@ The cache stores the data as long as the MongoClientWithCache instance is alive.
 the cache is destroyed as well. The MongoClientWithCache also holds references to the MongoDatabaseWithCache
 to keep them alive.
 
+## When is the cache cleaned up?
+
+The cache is cleaned up in a separate thread, which is started when the MongoCollectionWithCache is created.
+The cleanup thread is stopped when the MongoClientWithCache is destroyed. The thread checks every cleanup_cycle_time
+seconds if the cache is full. If the cache is full, the cleanup thread removes the most unsuitable entry from the cache
+according to the cache strategy. The cleanup thread also checks if the cache entries are expired. If they are expired, 
+they are removed from the cache as well.
+
+Furthermore, the cache for the collection is cleared when the collection is modified. This is done by
+overwriting the insert_one, insert_many, update_one, update_many, delete_one and delete_many functions of the
+Collection class. The cache is also cleared when the collection is dropped.
+
 ## Supported cache backends
 
-- InMemoryCacheBackend: Stores the data in an in-memory cache
-- MongoDbCacheBackend: Stores the data in an own database for caching inside the MongoDB instance
+- InMemoryCacheBackend: Stores the data in an in-memory cache, which maintains a dict with the data.
+- MongoDbCacheBackend: Stores the cache data in an own database for caching inside the MongoDB instance.
 
 ## Features
 
@@ -84,8 +96,6 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 ```
 
 ## Outlook
-
-- Handler for change streams of the collections, which invalidates the cache
 - Implementing a more sufficient cleanup strategy for the cache, which takes the execution time and the frequency of the
   function calls into account
 - Adding Cursor support for find and aggregate
