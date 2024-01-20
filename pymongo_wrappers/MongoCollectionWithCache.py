@@ -4,7 +4,8 @@
 import time
 from typing import Any, Optional, Mapping, List, Iterable, Union, Sequence
 
-from bson import _DocumentType, RawBSONDocument
+from bson.raw_bson import RawBSONDocument
+from pymongo.typings import _DocumentType
 from pymongo import ReturnDocument
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
