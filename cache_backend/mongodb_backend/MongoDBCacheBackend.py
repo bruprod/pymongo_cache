@@ -107,13 +107,15 @@ class MongoDBCacheBackend(CacheBackendBase):
 
     def delete(self, key: QueryInfo) -> None:
         """Delete the value from the cache."""
-        self._cache_collection.delete_one(
+        self._cache_collection.with_options(write_concern=WriteConcern(w=0)).delete_one(
             {COLLECTION_NAME: self.collection.name, HASH_VAL: key.__hash__()}
         )
 
     def clear(self) -> None:
         """Clear the cache."""
-        self._cache_collection.delete_many({COLLECTION_NAME: self.collection.name})
+        self._cache_collection.with_options(
+            write_concern=WriteConcern(w=0)
+        ).delete_many({COLLECTION_NAME: self.collection.name})
 
     def get_all(self) -> Dict[QueryInfo, Any]:
         """Get all the values from the cache."""
