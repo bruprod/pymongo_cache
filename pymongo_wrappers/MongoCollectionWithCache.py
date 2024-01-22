@@ -2,7 +2,7 @@
    adds a cache to speed up queries, which are requested multiple times.
 """
 import time
-from typing import Any, Optional, Mapping, List, Iterable, Union, Sequence
+from typing import Any, Optional, Mapping, List, Iterable, Union, Sequence, Tuple
 
 from bson.raw_bson import RawBSONDocument
 from pymongo.typings import _DocumentType
@@ -67,6 +67,7 @@ class MongoCollectionWithCache(Collection):
         self._max_num_items = max_num_items
         self._max_item_size = max_item_size
         self._ttl = ttl
+        self._default_caching_behavior = default_caching_behavior
 
     def _check_caching_allowed(self, function_enum: CacheFunctions) -> bool:
         """Checks if caching is allowed for the given function and due to the default caching behavior."""
@@ -181,7 +182,18 @@ class MongoCollectionWithCache(Collection):
 
         pipeline_query_info = QueryInfo(function_enum.name, pipeline=pipeline)
         item = self._cache_backend.get(pipeline_query_info)
-        if item is not None:
+        modifying_pipe_info = self._get_database_and_collection_from_modifying_pipeline(
+            pipeline
+        )
+
+        # Clear the cache if the pipeline is modifying any collection
+        if modifying_pipe_info is not None:
+            database, coll = modifying_pipe_info
+            self._cache_backend.clear_cache_for_database_and_collection(database, coll)
+
+        # If the pipeline is modifying any collection, then we cannot cache the result
+        # or retrieve the result from the cache
+        if item is not None and modifying_pipe_info is None:
             return iter(item)
         else:
             start = time.time_ns()
@@ -474,3 +486,32 @@ class MongoCollectionWithCache(Collection):
             let=let,
             comment=comment,
         )
+
+    def _get_database_and_collection_from_modifying_pipeline(
+        self,
+        pipeline: _Pipeline,
+    ) -> Optional[Tuple[str, str]]:
+        """Get the database and collection from the modifying pipeline."""
+
+        if len(pipeline) == 0:
+            return None
+
+        # $out and $merge must be the last stages in the pipeline
+        last_stage = pipeline[-1]
+        if last_stage is None:
+            return None
+
+        if "$out" in last_stage:
+            last_stage = last_stage["$out"]
+        elif "$merge" in last_stage and "into" in last_stage["$merge"]:
+            last_stage = last_stage["$merge"]["into"]
+        else:
+            return None
+
+        if isinstance(last_stage, str):
+            return self.database.name, last_stage
+
+        if isinstance(last_stage, dict) and "db" in last_stage and "coll" in last_stage:
+            return last_stage["db"], last_stage["coll"]
+
+        return None

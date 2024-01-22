@@ -50,7 +50,7 @@ class CacheBackendBase(metaclass=ABCMeta):
         self,
         key: QueryInfo,
         value: Any,
-        execution_time_millis: int,
+        execution_time_millis: float,
         ttl: Optional[int] = None,
     ) -> None:
         """Set the value in the cache.
@@ -98,7 +98,7 @@ class CacheBackendBase(metaclass=ABCMeta):
             time.sleep(self._cache_cleanup_cycle_time)
 
     @staticmethod
-    def _clear_cache_for_database_and_collection(
+    def clear_cache_for_database_and_collection(
         collection_name: str, database_name: str
     ) -> None:
         """Clear the cache for the database and collection."""
