@@ -2,11 +2,13 @@
 import time
 from abc import abstractmethod, ABCMeta
 from threading import Thread
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from pymongo.collection import Collection
 
 from cache_backend.QueryInfo import QueryInfo
+
+_cache_backend_registry: Dict[Tuple[str, str], "CacheBackendBase"] = {}
 
 
 class CacheBackendBase(metaclass=ABCMeta):
@@ -35,6 +37,8 @@ class CacheBackendBase(metaclass=ABCMeta):
         self._cache_cleanup_thread = Thread(target=self._cache_cleanup, daemon=True)
         self._cache_cleanup_thread.start()
         self._cache_cleanup_cycle_time = cache_cleanup_cycle_time
+
+        _cache_backend_registry[(collection.database.name, collection.name)] = self
 
     @abstractmethod
     def get(self, key: QueryInfo) -> Optional[Any]:
@@ -92,3 +96,10 @@ class CacheBackendBase(metaclass=ABCMeta):
                 print("Running cache cleanup.")
                 self._cache_cleanup_internal()
             time.sleep(self._cache_cleanup_cycle_time)
+
+    @staticmethod
+    def _clear_cache_for_database_and_collection(
+        collection_name: str, database_name: str
+    ) -> None:
+        """Clear the cache for the database and collection."""
+        _cache_backend_registry[(database_name, collection_name)].clear()
