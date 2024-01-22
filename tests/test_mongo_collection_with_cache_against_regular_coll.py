@@ -234,6 +234,45 @@ class TestMongoCollectionWithCacheAgainstRegularResults(unittest.TestCase):
 
         self.assertListEqual(list(cache_entries), list(regular_entries))
 
+    def test_aggregate_find_find_one(self):
+        self.cache_collection.find({"ticker_name": "AAPL"})
+        cache_entries_find = self.cache_collection.find({"ticker_name": "AAPL"})
+        regular_entries_find = self.regular_collection.find({"ticker_name": "AAPL"})
+
+        self.cache_collection.find_one({"ticker_name": "AAPL"})
+        cache_entries_find_one = self.cache_collection.find_one({"ticker_name": "AAPL"})
+        regular_entries_find_one = self.regular_collection.find_one(
+            {"ticker_name": "AAPL"}
+        )
+
+        self.cache_collection.aggregate(
+            [
+                {"$match": {"ticker_name": "AAPL"}},
+                {"$sort": {"timestamp": -1}},
+                {"$group": {"_id": "$ticker_name", "count": {"$sum": 1}}},
+            ]
+        )
+        cache_entries_aggregate = self.cache_collection.aggregate(
+            [
+                {"$match": {"ticker_name": "AAPL"}},
+                {"$sort": {"timestamp": -1}},
+                {"$group": {"_id": "$ticker_name", "count": {"$sum": 1}}},
+            ]
+        )
+        regular_entries_aggregate = self.regular_collection.aggregate(
+            [
+                {"$match": {"ticker_name": "AAPL"}},
+                {"$sort": {"timestamp": -1}},
+                {"$group": {"_id": "$ticker_name", "count": {"$sum": 1}}},
+            ]
+        )
+
+        self.assertListEqual(list(cache_entries_find), list(regular_entries_find))
+        self.assertDictEqual(cache_entries_find_one, regular_entries_find_one)
+        self.assertListEqual(
+            list(cache_entries_aggregate), list(regular_entries_aggregate)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
