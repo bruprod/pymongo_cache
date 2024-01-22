@@ -99,8 +99,6 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 - Implementing a more sufficient cleanup strategy for the cache, which takes the execution time and the frequency of the
   function calls into account
 - Adding Cursor support for find and aggregate
-- Invalidating cache entries, when a collection is modified by aggregation pipelines, which can be the cause for 
-  $out or $merge stages, which can modify any collection also in other databases
 - Support for TTL to the cache entries
 - Supporting a max_item_size for the cache entries
 - Adding a cache-backend for sqlite
