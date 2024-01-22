@@ -83,8 +83,8 @@ class MongoCollectionWithCache(Collection):
 
     def find_one(
         self,
-        *args: Any,
         filter: Optional[Any] = None,
+        *args: Any,
         cache_always: bool = True,
         **kwargs: Any,
     ):
@@ -121,8 +121,8 @@ class MongoCollectionWithCache(Collection):
 
     def find(
         self,
-        *args: Any,
         filter: Optional[dict] = None,
+        *args: Any,
         cache_always: bool = True,
         **kwargs: Any,
     ):
