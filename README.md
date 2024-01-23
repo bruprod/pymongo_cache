@@ -102,4 +102,5 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 - Support for TTL to the cache entries
 - Supporting a max_item_size for the cache entries
 - Adding a cache-backend for sqlite
+- Minimizing overhead for using the cache
 

@@ -172,27 +172,27 @@ class MongoCollectionWithCache(Collection):
         :param cache_always: If true, the query will always be cached, even
             if the function is not in the functions to cache or the default caching behavior is CACHE_NONE.
         """
-        # If the aggregate function is not in the functions to cache, then just return the result of the regular
-        # aggregate
         function_enum = CacheFunctions.AGGREGATE
-        if not self._check_caching_allowed(function_enum) and not cache_always:
-            return self.__regular_collection.aggregate(
-                pipeline, session=session, let=let, comment=comment, **kwargs
-            )
-
-        pipeline_query_info = QueryInfo(function_enum.name, pipeline=pipeline)
-        item = self._cache_backend.get(pipeline_query_info)
+        # Always check if the pipeline is modifying any collection
         modifying_pipe_info = self._get_database_and_collection_from_modifying_pipeline(
             pipeline
         )
-
         # Clear the cache if the pipeline is modifying any collection
         if modifying_pipe_info is not None:
             database, coll = modifying_pipe_info
             self._cache_backend.clear_cache_for_database_and_collection(database, coll)
 
+        # If the aggregate function is not in the functions to cache, then just return the result of the regular
+        # aggregate
+        if not self._check_caching_allowed(function_enum) and not cache_always:
+            return self.__regular_collection.aggregate(
+                pipeline, session=session, let=let, comment=comment, **kwargs
+            )
+
         # If the pipeline is modifying any collection, then we cannot cache the result
         # or retrieve the result from the cache
+        pipeline_query_info = QueryInfo(function_enum.name, pipeline=pipeline)
+        item = self._cache_backend.get(pipeline_query_info)
         if item is not None and modifying_pipe_info is None:
             return iter(item)
         else:
