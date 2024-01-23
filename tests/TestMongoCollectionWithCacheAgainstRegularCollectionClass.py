@@ -7,7 +7,7 @@ from cache_backend.CacheBackend import CacheBackend
 from pymongo_wrappers.MongoClientWithCache import MongoClientWithCache
 
 
-class TestMongoCollectionWithCacheAgainstRegularResults(unittest.TestCase):
+class TestMongoCollectionWithCacheAgainstRegularCollectionClass(unittest.TestCase):
     def setUp(self):
         self.regular_client = MongoClient()
         self.regular_db = self.regular_client["test"]

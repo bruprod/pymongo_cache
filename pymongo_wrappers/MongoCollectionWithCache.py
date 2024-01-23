@@ -5,7 +5,6 @@ import time
 from typing import Any, Optional, Mapping, List, Iterable, Union, Sequence, Tuple
 
 from bson.raw_bson import RawBSONDocument
-from pymongo.typings import _DocumentType
 from pymongo import ReturnDocument
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
@@ -17,6 +16,7 @@ from pymongo.results import (
     UpdateResult,
     DeleteResult,
 )
+from pymongo.typings import _DocumentType
 from pymongo.typings import _Pipeline, _CollationIn
 
 from cache_backend.CacheBackend import CacheBackend, CacheBackendFactory
@@ -71,10 +71,14 @@ class MongoCollectionWithCache(Collection):
 
     def _check_caching_allowed(self, function_enum: CacheFunctions) -> bool:
         """Checks if caching is allowed for the given function and due to the default caching behavior."""
-        if function_enum in self._functions_to_cache:
+        if (
+            function_enum in self._functions_to_cache
+            and self._default_caching_behavior == DefaultCachingBehavior.CACHE_ALL
+        ):
             return True
         elif self._default_caching_behavior == DefaultCachingBehavior.CACHE_ALL:
-            return True
+            # CACHE_ALL only caches the functions in the functions_to_cache list
+            return False
         elif self._default_caching_behavior == DefaultCachingBehavior.CACHE_NONE:
             return False
         else:
@@ -86,7 +90,7 @@ class MongoCollectionWithCache(Collection):
         self,
         filter: Optional[Any] = None,
         *args: Any,
-        cache_always: bool = True,
+        cache_always: bool = False,
         **kwargs: Any,
     ):
         """
@@ -124,7 +128,7 @@ class MongoCollectionWithCache(Collection):
         self,
         filter: Optional[dict] = None,
         *args: Any,
-        cache_always: bool = True,
+        cache_always: bool = False,
         **kwargs: Any,
     ):
         """
@@ -156,7 +160,7 @@ class MongoCollectionWithCache(Collection):
             end = time.time_ns()
             exec_in_ms = (end - start) / 1e6
             self._cache_backend.set(query_info, list(result), exec_in_ms)
-            return iter(self._cache_backend.get(query_info))
+            return iter(result)
 
     def aggregate(
         self,
@@ -164,7 +168,7 @@ class MongoCollectionWithCache(Collection):
         session: Optional[ClientSession] = None,
         let: Optional[Mapping[str, Any]] = None,
         comment: Optional[Any] = None,
-        cache_always: bool = True,
+        cache_always: bool = False,
         **kwargs: Any,
     ) -> CommandCursor:
         """
@@ -183,8 +187,11 @@ class MongoCollectionWithCache(Collection):
             self._cache_backend.clear_cache_for_database_and_collection(database, coll)
 
         # If the aggregate function is not in the functions to cache, then just return the result of the regular
-        # aggregate
-        if not self._check_caching_allowed(function_enum) and not cache_always:
+        # aggregate. Also, if the pipeline is modifying any collection, then we cannot cache the result or retrieve
+        # the result from the cache
+        if (
+            not self._check_caching_allowed(function_enum) and not cache_always
+        ) or modifying_pipe_info is not None:
             return self.__regular_collection.aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
@@ -193,7 +200,7 @@ class MongoCollectionWithCache(Collection):
         # or retrieve the result from the cache
         pipeline_query_info = QueryInfo(function_enum.name, pipeline=pipeline)
         item = self._cache_backend.get(pipeline_query_info)
-        if item is not None and modifying_pipe_info is None:
+        if item is not None:
             return iter(item)
         else:
             start = time.time_ns()
