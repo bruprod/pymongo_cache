@@ -95,12 +95,25 @@ client = MongoClientWithCache(cache_backend=CacheBackend.IN_MEMORY)
 
 ```
 
+## What is not supported?
+
+Currently, the find and aggregate functions do not return a Cursor or a CommandCursor. Instead, they return an iterator
+over the results. 
+
+Furthermore, the cache currently is not thread-safe. This means that if multiple threads access the same collection, 
+the results may be inconsistent, when retrieved in a multi-threaded environment. The reason for this is that the 
+cache is not locked when it is accessed, which means that the cache may be modified by multiple threads at 
+the same time.
+
 ## Outlook
+- Thread-safety for the cache
+  1. Lock cache access and modification on the same collections
+  2. Refactoring of the cache to provide thread-safety with as little overhead as possible
 - Implementing a more sufficient cleanup strategy for the cache, which takes the execution time and the frequency of the
   function calls into account
 - Adding Cursor support for find and aggregate
 - Support for TTL to the cache entries
 - Supporting a max_item_size for the cache entries
 - Adding a cache-backend for sqlite
-- Minimizing overhead for using the cache
+- Minimizing overhead for using the cache, when compared to the pymongo collection class
 
