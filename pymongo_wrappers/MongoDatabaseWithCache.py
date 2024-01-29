@@ -1,4 +1,6 @@
 """Mongo database class with cache."""
+from typing import Optional
+
 from pymongo.database import Database
 
 from cache_backend.CacheBackend import CacheBackend
@@ -15,7 +17,7 @@ class MongoDatabaseWithCache(Database):
     _cache_backend: CacheBackend = CacheBackend.IN_MEMORY
     _functions_to_cache = None
     _collections_created = None
-    _cache_cleanup_cycle_time = 5.0
+    _cache_cleanup_cycle_time = None
     _max_num_items = 1000
     _max_item_size = 1 * 10**6
     _ttl = 0
@@ -26,7 +28,7 @@ class MongoDatabaseWithCache(Database):
         *args,
         cache_backend: CacheBackend = CacheBackend.IN_MEMORY,
         functions_to_cache=None,
-        cache_cleanup_cycle_time: float = 5.0,
+        cache_cleanup_cycle_time: Optional[float] = None,
         max_num_items: int = 1000,
         max_item_size: int = 1 * 10**6,
         ttl: int = 0,
