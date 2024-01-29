@@ -39,6 +39,8 @@ class MongoDBCacheBackend(CacheBackendBase):
         max_num_items: int = 1000,
         cache_cleanup_cycle_time: float = 1,
     ):
+        # TODO: Add TTL index
+        # TODO: Keep track of the number of items in the cache so no database query is needed if the cache is full
         super().__init__(
             collection,
             ttl,
