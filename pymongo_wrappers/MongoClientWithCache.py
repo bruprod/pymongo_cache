@@ -60,6 +60,8 @@ class MongoClientWithCache(MongoClient):
         if name in self._database_created:
             return self._database_created[name]
 
+        # TODO database dict may not be thread safe due to being hold in a dict
+
         db = MongoDatabaseWithCache(
             self,
             name,

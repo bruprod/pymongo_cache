@@ -52,6 +52,8 @@ class MongoDatabaseWithCache(Database):
         if item in self._collections_created:
             return self._collections_created[item]
 
+        # TODO collecton dict may not be thread safe due to being hold in a dict
+
         coll = MongoCollectionWithCache(
             self,
             item,
