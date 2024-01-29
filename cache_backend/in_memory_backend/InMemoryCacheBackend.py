@@ -1,16 +1,20 @@
 """Implementation of the MemoryCacheBackend class, which implements the CacheBackend interface."""
+import copy
 from datetime import datetime
+from threading import Lock
 from typing import Dict, Any
 
 from pymongo.collection import Collection
 
-from cache_backend.base.CacheBackendBase import CacheBackendBase
-from cache_backend.base.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.CacheEntry import CacheEntry
 from cache_backend.QueryInfo import QueryInfo
+from cache_backend.base.CacheBackendBase import CacheBackendBase
+from cache_backend.base.CacheCleanupHandlerBase import CleanupStrategy
 from cache_backend.in_memory_backend.InMemoryCacheCleanupHandler import (
     InMemoryCacheCleanupHandler,
 )
+
+_cache_lock: Lock = Lock()
 
 
 class InMemoryCacheBackend(CacheBackendBase):
@@ -43,7 +47,8 @@ class InMemoryCacheBackend(CacheBackendBase):
 
     def get(self, key: QueryInfo) -> Any:
         """Get the value from the cache."""
-        entry = self._cache.get(key, None)
+        with _cache_lock:
+            entry = self._cache.get(key, None)
 
         if entry is not None:
             # Update the timestamp and access count when the entry is accessed
@@ -61,24 +66,29 @@ class InMemoryCacheBackend(CacheBackendBase):
         :param key: The key to set.
         :param execution_time_millis: The execution time of the query in milliseconds.
         """
-        self._cache_cleanup_internal()
+        with _cache_lock:
+            self._cache_cleanup_internal()
 
-        self._cache[key] = CacheEntry(
-            key, value, self.collection.name, key.__hash__(), execution_time_millis
-        )
+            self._cache[key] = CacheEntry(
+                key, value, self.collection.name, key.__hash__(), execution_time_millis
+            )
 
     def delete(self, key: QueryInfo) -> None:
         """Delete the value from the cache."""
-        if key in self._cache:
-            del self._cache[key]
+
+        with _cache_lock:
+            if key in self._cache:
+                del self._cache[key]
 
     def clear(self) -> None:
         """Clear the cache."""
-        self._cache.clear()
+        with _cache_lock:
+            self._cache.clear()
 
     def get_all(self) -> Dict[QueryInfo, Any]:
         """Get all the values from the cache."""
-        return self._cache
+        with _cache_lock:
+            return copy.deepcopy(self._cache)
 
     def _cache_cleanup_internal(self) -> None:
         """Clean up the cache."""

@@ -1,6 +1,7 @@
 """ Class for caching MongoDB queries in a SQLite database. """
 import atexit
 from datetime import datetime
+from threading import Lock
 from typing import Any, Dict
 
 from pymongo import IndexModel, ASCENDING, WriteConcern
