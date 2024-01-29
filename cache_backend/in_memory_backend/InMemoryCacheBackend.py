@@ -53,7 +53,7 @@ class InMemoryCacheBackend(CacheBackendBase):
         return None
 
     def set(
-        self, key: QueryInfo, value: Any, execution_time_millis, ttl: int = None
+        self, key: QueryInfo, value: Any, execution_time_millis: float, ttl: int = None
     ) -> None:
         """Set the value in the cache.
         :param ttl: The time to live for the key.
@@ -61,6 +61,8 @@ class InMemoryCacheBackend(CacheBackendBase):
         :param key: The key to set.
         :param execution_time_millis: The execution time of the query in milliseconds.
         """
+        self._cache_cleanup_internal()
+
         self._cache[key] = CacheEntry(
             key, value, self.collection.name, key.__hash__(), execution_time_millis
         )

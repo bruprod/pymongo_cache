@@ -96,6 +96,8 @@ class MongoDBCacheBackend(CacheBackendBase):
         :param execution_time_millis: The execution time of the query in milliseconds.
         """
 
+        self._cache_cleanup_internal()
+
         cache_entry = CacheEntry(
             key, value, self.collection.name, key.__hash__(), execution_time_millis
         )

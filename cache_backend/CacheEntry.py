@@ -12,7 +12,7 @@ class CacheEntry:
     value: Any
     collection_name: str
     hash_val: int
-    execution_time: int  # in milliseconds
+    execution_time: float  # in milliseconds
     timestamp: datetime = None
     access_count: int = 0
 
