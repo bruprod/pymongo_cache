@@ -29,7 +29,6 @@ from pymongo_wrappers.DefaultCachingBehavior import DefaultCachingBehavior
 class MongoCollectionWithCache(Collection):
     _cache_backend: CacheBackendBase = None
     _functions_to_cache = None
-    __regular_collection = None
     _cache_cleanup_cycle_time = None
     _max_num_items = 1000
     _max_item_size = 1 * 10**6
@@ -56,7 +55,6 @@ class MongoCollectionWithCache(Collection):
             max_item_size=max_item_size,
             ttl=ttl,
         )
-        self.__regular_collection = Collection(self.database, self.name)
 
         if functions_to_cache is None:
             self._functions_to_cache = DEFAULT_CACHE_FUNCTIONS
@@ -102,7 +100,9 @@ class MongoCollectionWithCache(Collection):
         # If the find_one function is not in the functions to cache, then just return the result of the regular find_one
         function_enum = CacheFunctions.FIND_ONE
         if not self._check_caching_allowed(function_enum) and not cache_always:
-            return self.__regular_collection.find_one(filter, *args, **kwargs)
+            return Collection(self.database, self.name).find_one(
+                filter, *args, **kwargs
+            )
 
         query_info = QueryInfo(
             function_enum.name,
@@ -118,7 +118,9 @@ class MongoCollectionWithCache(Collection):
             return item
         else:
             start = time.time_ns()
-            result = self.__regular_collection.find_one(filter, *args, **kwargs)
+            result = Collection(self.database, self.name).find_one(
+                filter, *args, **kwargs
+            )
             end = time.time_ns()
             exec_in_ms = (end - start) / 1e6
             self._cache_backend.set(query_info, result, exec_in_ms)
@@ -140,7 +142,7 @@ class MongoCollectionWithCache(Collection):
         # If the find function is not in the functions to cache, then just return the result of the regular find
         function_enum = CacheFunctions.FIND
         if not self._check_caching_allowed(function_enum) and not cache_always:
-            return self.__regular_collection.find(filter, *args, **kwargs)
+            return Collection(self.database, self.name).find(filter, *args, **kwargs)
 
         query_info = QueryInfo(
             function_enum.name,
@@ -156,7 +158,7 @@ class MongoCollectionWithCache(Collection):
             return iter(item)
         else:
             start = time.time_ns()
-            result = self.__regular_collection.find(filter, *args, **kwargs)
+            result = Collection(self.database, self.name).find(filter, *args, **kwargs)
             end = time.time_ns()
             exec_in_ms = (end - start) / 1e6
             self._cache_backend.set(query_info, list(result), exec_in_ms)
@@ -192,7 +194,7 @@ class MongoCollectionWithCache(Collection):
         if (
             not self._check_caching_allowed(function_enum) and not cache_always
         ) or modifying_pipe_info is not None:
-            return self.__regular_collection.aggregate(
+            return Collection(self.database, self.name).aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
 
@@ -204,7 +206,7 @@ class MongoCollectionWithCache(Collection):
             return iter(item)
         else:
             start = time.time_ns()
-            result = self.__regular_collection.aggregate(
+            result = Collection(self.database, self.name).aggregate(
                 pipeline, session=session, let=let, comment=comment, **kwargs
             )
             end = time.time_ns()
@@ -225,7 +227,7 @@ class MongoCollectionWithCache(Collection):
         # Override the insert_many function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.insert_many(
+        return Collection(self.database, self.name).insert_many(
             documents,
             ordered=ordered,
             bypass_document_validation=bypass_document_validation,
@@ -245,7 +247,7 @@ class MongoCollectionWithCache(Collection):
         # Override the insert_one function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.insert_one(
+        return Collection(self.database, self.name).insert_one(
             document,
             bypass_document_validation=bypass_document_validation,
             session=session,
@@ -270,7 +272,7 @@ class MongoCollectionWithCache(Collection):
         # Override the update_one function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.update_one(
+        return Collection(self.database, self.name).update_one(
             filter,
             update,
             upsert=upsert,
@@ -301,7 +303,7 @@ class MongoCollectionWithCache(Collection):
         # Override the update_many function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.update_many(
+        return Collection(self.database, self.name).update_many(
             filter,
             update,
             upsert=upsert,
@@ -328,7 +330,7 @@ class MongoCollectionWithCache(Collection):
         # Override the delete_many function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.delete_many(
+        return Collection(self.database, self.name).delete_many(
             filter,
             collation=collation,
             hint=hint,
@@ -351,7 +353,7 @@ class MongoCollectionWithCache(Collection):
         # Override the delete_one function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.delete_one(
+        return Collection(self.database, self.name).delete_one(
             filter,
             collation=collation,
             hint=hint,
@@ -370,7 +372,7 @@ class MongoCollectionWithCache(Collection):
         # Override the drop function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.drop(
+        return Collection(self.database, self.name).drop(
             session=session, comment=comment, encrypted_fields=encrypted_fields
         )
 
@@ -389,7 +391,7 @@ class MongoCollectionWithCache(Collection):
         # Override the find_one_and_delete function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.find_one_and_delete(
+        return Collection(self.database, self.name).find_one_and_delete(
             filter,
             projection=projection,
             sort=sort,
@@ -418,7 +420,7 @@ class MongoCollectionWithCache(Collection):
         # Override the find_one_and_replace function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.find_one_and_replace(
+        return Collection(self.database, self.name).find_one_and_replace(
             filter,
             replacement,
             projection=projection,
@@ -451,7 +453,7 @@ class MongoCollectionWithCache(Collection):
         # Override the find_one_and_update function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.find_one_and_update(
+        return Collection(self.database, self.name).find_one_and_update(
             filter,
             update,
             projection=projection,
@@ -482,7 +484,7 @@ class MongoCollectionWithCache(Collection):
         # Override the replace_one function, such that we can clear the cache
         self._cache_backend.clear()
 
-        return self.__regular_collection.replace_one(
+        return Collection(self.database, self.name).replace_one(
             filter,
             replacement,
             upsert=upsert,

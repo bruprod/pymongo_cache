@@ -1,4 +1,5 @@
 """Mongo client class with cache."""
+from threading import Lock
 from typing import Optional
 
 from pymongo import MongoClient
@@ -7,6 +8,8 @@ from cache_backend.CacheBackend import CacheBackend
 from pymongo_wrappers.CacheFunctions import DEFAULT_CACHE_FUNCTIONS
 from pymongo_wrappers.DefaultCachingBehavior import DefaultCachingBehavior
 from pymongo_wrappers.MongoDatabaseWithCache import MongoDatabaseWithCache
+
+_client_dict_lock: Lock = Lock()
 
 
 class MongoClientWithCache(MongoClient):
@@ -57,23 +60,22 @@ class MongoClientWithCache(MongoClient):
         self._default_caching_behavior = default_caching_behavior
 
     def __getitem__(self, name: str) -> MongoDatabaseWithCache:
-        if name in self._database_created:
-            return self._database_created[name]
+        with _client_dict_lock:
+            if name in self._database_created:
+                return self._database_created[name]
 
-        # TODO database dict may not be thread safe due to being hold in a dict
+            db = MongoDatabaseWithCache(
+                self,
+                name,
+                cache_backend=self._cache_backend,
+                functions_to_cache=self._functions_to_cache,
+                cache_cleanup_cycle_time=self._cache_cleanup_cycle_time,
+                max_num_items=self._max_num_items,
+                max_item_size=self._max_item_size,
+                ttl=self._ttl,
+                default_caching_behavior=self._default_caching_behavior,
+            )
 
-        db = MongoDatabaseWithCache(
-            self,
-            name,
-            cache_backend=self._cache_backend,
-            functions_to_cache=self._functions_to_cache,
-            cache_cleanup_cycle_time=self._cache_cleanup_cycle_time,
-            max_num_items=self._max_num_items,
-            max_item_size=self._max_item_size,
-            ttl=self._ttl,
-            default_caching_behavior=self._default_caching_behavior,
-        )
+            self._database_created[name] = db
 
-        self._database_created[name] = db
-
-        return db
+            return db
