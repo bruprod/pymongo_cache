@@ -162,7 +162,7 @@ class MongoCollectionWithCache(Collection):
             end = time.time_ns()
             exec_in_ms = (end - start) / 1e6
             self._cache_backend.set(query_info, list(result), exec_in_ms)
-            return iter(result)
+            return iter(self._cache_backend.get(query_info))
 
     def aggregate(
         self,
